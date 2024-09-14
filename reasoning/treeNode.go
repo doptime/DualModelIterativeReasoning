@@ -2,6 +2,7 @@ package reasoning
 
 import (
 	"DualModelIterativeReasoning/models"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -13,9 +14,10 @@ var KeyTreeNode = db.HashKey[string, *TreeNode]()
 var NodesMap = cmap.New[*TreeNode]()
 
 type TreeNode struct {
-	Id       string
-	ParentId string
-	Layer    int
+	Id         string
+	ParentId   string
+	Layer      int
+	Difficulty float64
 
 	UserMsg      *models.Message
 	Solution     *models.Message
@@ -23,32 +25,56 @@ type TreeNode struct {
 	score        float64 `msgpack:"-"`
 }
 
-func (node *TreeNode) Score() (Score float64) {
-	var err error
+var GetID = func() func(layter int) string {
+	var IDHeader string = db.NanoId(4)
+	var GlobalID int = 0
+	return func(layter int) string {
+		GlobalID++
+		return fmt.Sprintf("%s-%d-%d", IDHeader, layter, GlobalID)
+	}
+}()
+
+func (parent *TreeNode) NewChild() (newNode *TreeNode) {
+	id := GetID(parent.Layer + 1)
+	newNode = &TreeNode{Id: id, ParentId: parent.Id, Layer: parent.Layer + 1}
+	NodesMap.Set(id, newNode)
+	return newNode
+}
+
+func ReadFloatAfterTag(tag, s string) (float64, error) {
+	ind := strings.Index(s, tag)
+	if ind < 0 {
+		return 0, nil
+	}
+	s = s[ind+len(tag):]
+	s = strings.TrimSpace(s)
+
+	s = strings.Split(s, "\n")[0]
+	if ind := strings.Index(s, "="); ind >= 0 {
+		s = s[ind+1:]
+	}
+	s = strings.TrimSpace(s)
+
+	validInd := 0
+	for ; validInd < len(s) && strings.ContainsRune("0123456789.", rune(s[validInd])); validInd++ {
+	}
+	s = s[:validInd]
+	if validInd == 0 {
+		return 0, fmt.Errorf("no number found")
+	}
+	return strconv.ParseFloat(s, 64)
+}
+
+func (node *TreeNode) Score() (Score float64, err error) {
 	if node.score != 0 {
-		return node.score
+		return node.score, nil
 	}
 	if node.Verification == nil || len(node.Verification.Content) == 0 {
-		return 0
+		return 0, fmt.Errorf("no verification found")
 	}
 	s := strings.ToLower(node.Verification.Content)
-	items := strings.Split(s, "score:")
-	for _, txt := range items {
-		txt = strings.TrimSpace(txt)
-		//reserve number char or . only in leading text
-		validInd := 0
-		for ; validInd < len(txt) && strings.ContainsRune("0123456789.", rune(txt[validInd])); validInd++ {
-		}
-		if validInd == 0 {
-			continue
-		}
-		txt = txt[:validInd]
-		node.score, err = strconv.ParseFloat(txt, 64)
-		if err == nil {
-			break
-		}
-	}
-	return node.score
+	node.score, err = ReadFloatAfterTag("overall score:", s)
+	return node.score, err
 }
 func (node *TreeNode) Refinement(leadingtext string) (refinementMsg *models.Message) {
 	if node.Verification == nil || len(node.Verification.Content) == 0 {
@@ -63,13 +89,6 @@ func (node *TreeNode) Refinement(leadingtext string) (refinementMsg *models.Mess
 	text := strings.TrimSpace(node.Verification.Content[ind : len(node.Verification.Content)-1])
 	text = strings.Split(text, "##")[0]
 	return models.AssistantMsg(text)
-}
-
-func (parent *TreeNode) NewChild(id string) (newNode *TreeNode) {
-
-	newNode = &TreeNode{Id: id, ParentId: parent.Id, Layer: parent.Layer + 1}
-	NodesMap.Set(id, newNode)
-	return newNode
 }
 func (n *TreeNode) Save() {
 	KeyTreeNode.HSet(n.Id, n)
@@ -87,8 +106,15 @@ func (node *TreeNode) Children() (children []*TreeNode) {
 func (node *TreeNode) BestScoreNode() (bestChild *TreeNode) {
 	value := float64(0)
 	NodesMap.IterCb(func(key string, node *TreeNode) {
-		if node.Score() > value && node.Layer >= 1 {
-			value = node.Score()
+		score, err := node.Score()
+		if err != nil {
+			return
+		}
+		if score > value && node.Layer >= 1 {
+			value = score
+			bestChild = node
+		}
+		if bestChild != nil && score == value && node.Layer >= bestChild.Layer {
 			bestChild = node
 		}
 	})

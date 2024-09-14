@@ -10,10 +10,13 @@ func main() {
 	for _, v := range mp {
 		reasoning.NodesMap.Set(v.Id, v)
 	}
+	if node, ok := reasoning.NodesMap.Get("root"); ok {
+		reasoning.MCTSTrajectory = node
+	}
 	if reasoning.NodesMap.Count() == 0 {
 		reasoning.NodesMap.Set("root", reasoning.MCTSTrajectory)
 	}
 	// Perform reasoning
-	reasoning.DualModelIterativeResoning()
+	reasoning.MCTSTrajectory.DualModelIterativeResoning()
 
 }
