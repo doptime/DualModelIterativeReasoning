@@ -20,7 +20,7 @@ func (node *TreeNode) ParalleSolve(difficulty float64) (err error) {
 	// <Alternative Solution here, when difficulty >= 3>
 	// ## Alternative Solution Refinement:
 	// <Alternative Solution here, when difficulty is 5>
-	numParalellUnfolding := int(3 * difficulty)
+	numParalellUnfolding := int(2 * difficulty)
 	for i := len(MCTSTrajectory.Children()); i < numParalellUnfolding; i++ {
 		childNode := MCTSTrajectory.NewChild()
 		childNode.Solution, err = models.SLM1.AskLLM(0.7, false, SysPromptBasic, MCTSTrajectory.UserMsg, models.UserMsg(`Now, follow these steps:
@@ -43,59 +43,48 @@ Evaluate the strengths and weaknesses of Plan Proposal
 		}
 		fmt.Println("The Solution is: ", childNode.Solution.Content)
 		CheckerMesseges := models.UserMsg(`Given a question and Problem Analysis, Plan Proposal, Solution and it's refinement proposal, Follow these steps:
-1. Multi-dimensional Scoring:
-For each dimension, provide a score between 0 and 10 (allowing for decimal points), where:
-0-2 = Incorrect or significantly flawed
-3-5 = Partially correct but needs major improvements
-6-8 = Mostly correct with minor improvements needed
-9-10 = Excellent, with little to no room for improvement
+** Improvement Suggestions **
+- reasoning to raise a most powerful plan to overturn the conclusion
+- reasoning to remove redundancy in the plane or solution to keep it simple and concise
+- Provide 1-2 specific suggestions for how the solution plan could be improved.
+- propose one step plan, optional
+- propose next sub plan along with answer, to a plan optional
+- propose how to answer a step of plan again, optional
+- propose rephrase question or subquestion to a plan, optional
 
+** Multi-dimensional Scoring **
 Dimensions to score:
-a) Correctness: How accurate and error-free is the solution?
-b) Completeness: How thoroughly does it address all aspects of the problem?
-c) Clarity: How clear and easy to understand is the explanation?
-d) Efficiency: How optimal is the approach in terms of time/resource usage?
-e) Originality: How innovative or creative is the solution?
+Reasoning: <How likely is it that the conclusion will be overturned?>
+Score Given: <score ,[-30-0]> 
 
-Format:
-Plan Correctness: <score> / 10
-Reasoning: <brief explanation>
+Solution Accuracy and Error-Free:
+Reasoning: <How accurate and error-free is the solution?>
+Score Given: <score ,[0-10]> 
 
-Plan Completeness: <score> / 10
-Reasoning: <brief explanation>
+Solution Correctness:
+Reasoning: <How thoroughly does it address all aspects of the problem?>
+Score Given: <score ,[0-10]> 
 
-Plan Clarity: <score> / 10
-Reasoning: <brief explanation>
+Solution Completeness:
+Reasoning: <how complete is the solution?>
+Score Given: <score ,[0-10]> 
 
-Plan Efficiency: <score> / 10
-Reasoning: <brief explanation>
+Solution Clarity: 
+Reasoning: <How clear and easy to understand is the explanation?>
+Score Given: <score ,[0-10]> 
 
-Solution Correctness: <score> / 10
-Reasoning: <brief explanation>
+Solution Efficiency: 
+Reasoning: <How optimal is the approach in terms of time/resource usage?>
+Score Given: <score ,[0-10]> 
 
-Solution Completeness: <score> / 10
-Reasoning: <brief explanation>
+Solution Redundancy: 
+Reasoning: < Is there one or more step can be  deleted or simplified>
+Score Given: <score ,[-20-0]> 
 
-Solution Clarity: <score> / 10
-Reasoning: <brief explanation>
-
-Solution Efficiency: <score> / 10
-Reasoning: <brief explanation>
-
-2. Overall Evaluation:
-Provide a weighted average of the above scores (you may assign different weights to each dimension based on their importance for the specific problem).
-
-Overall Score: <weighted average, realvalue> / 10
-
-<---->
-
-3. Improvement Suggestions:
-- Provide 1-3 specific suggestions for how the solution plan could be improved.
-- consider one the following actions if there's no appropriate suggestion:
-	- propose one step thought
-	- propose next subquestion along with answer
-	- propose answer subquestion again
-	- propose rephrase question or subquestion
+** Overall Evaluation **
+Sum Score Calculation: 
+- calculate step by step to get the sum of the above scores 
+Overall Evaluation: <display calculated Sum Score > 
 `)
 		if childNode.Verification, err = models.SLM2.AskLLM(0.7, false, SysPromptBasic, MCTSTrajectory.UserMsg, childNode.Solution, CheckerMesseges); err != nil {
 			fmt.Println("Error: ", err)

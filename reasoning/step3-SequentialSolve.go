@@ -3,6 +3,9 @@ package reasoning
 import (
 	"DualModelIterativeReasoning/models"
 	"fmt"
+	"strings"
+
+	"github.com/atotto/clipboard"
 )
 
 func (node *TreeNode) SequentialSolve(TryNum int) (err error) {
@@ -14,79 +17,81 @@ Analyze the given problem, solution and refinement ideas. Identify key component
 2. Plan reproposed:
 - Devise a step-by-step plan to solve the problem. (don't actually start solving yet, just make a plan)
 
-3. Solution to the question:
-- Use Chain of Thought reasoning to work through the plan and write the full solution within thinking.
-## Solution: <...>
+3. Solving The Question Step by Step, According to the Plan:
+Use Chain of Thought ,i.e., Work through the Plan Step by Step, write the full solution for each plan steps. until  finally answer the question.
 
-4. Solution Refinement:
-Evaluate the strengths and weaknesses of Plan Proposal`)
+4. Conclusion:
+
+5. Evaluate Solution Refinement:
+Evaluate the strengths and weaknesses of the solution to the question`)
+
 	VerifierMessege := models.UserMsg(`Given a question and Problem Analysis, Plan Proposal, Solution and it's refinement proposal, Follow these steps:
-1. Multi-dimensional Scoring:
-For each dimension, provide a score between 0 and 10 (allowing for decimal points), where:
-0-2 = Incorrect or significantly flawed
-3-5 = Partially correct but needs major improvements
-6-8 = Mostly correct with minor improvements needed
-9-10 = Excellent, with little to no room for improvement
+** Improvement Suggestions **
+- reasoning to raise a most powerful plan to overturn the conclusion
+- reasoning to remove redundancy in the plane or solution to keep it simple and concise
+- Provide 1-2 specific suggestions for how the solution plan could be improved.
+- propose one step plan, optional
+- propose next sub plan along with answer, to a plan optional
+- propose how to answer a step of plan again, optional
+- propose rephrase question or subquestion to a plan, optional
 
+
+** Multi-dimensional Scoring **
 Dimensions to score:
-a) Correctness: How accurate and error-free is the solution?
-b) Completeness: How thoroughly does it address all aspects of the problem?
-c) Clarity: How clear and easy to understand is the explanation?
-d) Efficiency: How optimal is the approach in terms of time/resource usage?
-e) Originality: How innovative or creative is the solution?
+Reasoning: <How likely is it that the conclusion will be overturned?>
+Score Given: <score ,[-30-0]> 
 
-Format:
-Plan Correctness: <score> / 10
-Reasoning: <brief explanation>
+Solution Accuracy and Error-Free:
+Reasoning: <How accurate and error-free is the solution?>
+Score Given: <score ,[0-10]> 
 
-Plan Completeness: <score> / 10
-Reasoning: <brief explanation>
+Solution Correctness:
+Reasoning: <How thoroughly does it address all aspects of the problem?>
+Score Given: <score ,[0-10]> 
 
-Plan Clarity: <score> / 10
-Reasoning: <brief explanation>
+Solution Completeness:
+Reasoning: <how complete is the solution?>
+Score Given: <score ,[0-10]> 
 
-Plan Efficiency: <score> / 10
-Reasoning: <brief explanation>
+Solution Clarity: 
+Reasoning: <How clear and easy to understand is the explanation?>
+Score Given: <score ,[0-10]> 
 
-Solution Correctness: <score> / 10
-Reasoning: <brief explanation>
+Solution Efficiency: 
+Reasoning: <How optimal is the approach in terms of time/resource usage?>
+Score Given: <score ,[0-10]> 
 
-Solution Completeness: <score> / 10
-Reasoning: <brief explanation>
+Solution Redundancy: 
+Reasoning: < Is there one or more step can be  deleted or simplified>
+Score Given: <score ,[-20-0]> 
 
-Solution Clarity: <score> / 10
-Reasoning: <brief explanation>
-
-Solution Efficiency: <score> / 10
-Reasoning: <brief explanation>
-
-2. Overall Evaluation:
-Provide a weighted average of the above scores (you may assign different weights to each dimension based on their importance for the specific problem).
-
-Overall Score: <weighted average, realvalue> / 10
-
-<---->
-
-3. Improvement Suggestions:
-- Provide 1-3 specific suggestions for how the solution plan could be improved.
-- consider one the following actions if there's no appropriate suggestion:
-	- propose one step thought
-	- propose next subquestion along with answer
-	- propose answer subquestion again
-	- propose rephrase question or subquestion
+** Overall Evaluation **
+Sum Score Calculation: 
+- calculate step by step to get the sum of the above scores 
+Overall Evaluation: <display calculated score > 
 `)
 
+	var bestAnswerNode *TreeNode = MCTSTrajectory.BestScoreNode()
 	for i := 0; i < TryNum; i++ {
-		var bestAnswerNode *TreeNode = MCTSTrajectory.BestScoreNode()
 		NewBestTrail := bestAnswerNode.NewChild()
-		if NewBestTrail.Solution, err = models.SLM1.AskLLM(0.7, false, SysPromptBasic, MCTSTrajectory.UserMsg, bestAnswerNode.Solution, bestAnswerNode.Refinement("Suggestions:"), SolverMesseges); err != nil {
+		if NewBestTrail.Solution, err = models.SLM1.AskLLM(0.7, false, SysPromptBasic, MCTSTrajectory.UserMsg, bestAnswerNode.Solution, bestAnswerNode.Refinement("improvement Suggestions"), SolverMesseges); err != nil {
 			fmt.Println("Error: ", err)
 			continue
 		}
-		if NewBestTrail.Verification, err = models.SLM2.AskLLM(0.7, false, SysPromptBasic, MCTSTrajectory.UserMsg, NewBestTrail.Solution, VerifierMessege); err != nil {
+		if NewBestTrail.Verification, err = models.SLM2.AskLLM(0.7, false, MCTSTrajectory.UserMsg, NewBestTrail.Solution, VerifierMessege); err != nil {
 			fmt.Println("Error: ", err)
 			continue
 		}
+		// clear the console
+		//copy to the clipboard
+		var stringBuilder strings.Builder
+		stringBuilder.WriteString("\n\n# Solution:\n")
+		stringBuilder.WriteString(NewBestTrail.Solution.Content)
+		stringBuilder.WriteString("\n\n# Verification:\n")
+		stringBuilder.WriteString(NewBestTrail.Verification.Content)
+		clipboard.WriteAll(stringBuilder.String())
+
+		bestAnswerNode = NewBestTrail
 		NewBestTrail.Save()
 	}
 	return nil

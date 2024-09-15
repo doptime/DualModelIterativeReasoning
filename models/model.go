@@ -23,7 +23,8 @@ var SLM1 = &Model{
 var SLM2 = &Model{
 	//ModelName: "neuralmagic/Qwen2-7B-Instruct-quantized.w8a16",
 	//Url:       "http://gpu.lan:8006/v1/chat/completions",
-	ModelName: "neuralmagic/Phi-3-medium-128k-instruct-quantized.w4a16",
+	//ModelName: "neuralmagic/Phi-3-medium-128k-instruct-quantized.w4a16",
+	ModelName: "neuralmagic/gemma-2-9b-it-quantized.w4a16",
 	Url:       "http://gpu.lan:8003/v1/chat/completions",
 	ApiKey:    "token-deaf",
 }

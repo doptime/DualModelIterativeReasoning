@@ -3,6 +3,7 @@ module DualModelIterativeReasoning
 go 1.22.3
 
 require (
+	github.com/atotto/clipboard v0.1.4
 	github.com/doptime/doptime v0.0.0-20240903064453-c8690cd7b736
 	github.com/orcaman/concurrent-map/v2 v2.0.1
 )

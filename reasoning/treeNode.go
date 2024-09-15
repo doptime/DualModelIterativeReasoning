@@ -3,6 +3,7 @@ package reasoning
 import (
 	"DualModelIterativeReasoning/models"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -74,6 +75,10 @@ func (node *TreeNode) Score() (Score float64, err error) {
 	}
 	s := strings.ToLower(node.Verification.Content)
 	node.score, err = ReadFloatAfterTag("overall score:", s)
+	if err != nil || node.score == 0 {
+		node.score, err = ReadFloatAfterTag("evaluation:", s)
+	}
+
 	return node.score, err
 }
 func (node *TreeNode) Refinement(leadingtext string) (refinementMsg *models.Message) {
@@ -88,6 +93,8 @@ func (node *TreeNode) Refinement(leadingtext string) (refinementMsg *models.Mess
 	}
 	text := strings.TrimSpace(node.Verification.Content[ind : len(node.Verification.Content)-1])
 	text = strings.Split(text, "##")[0]
+	text = strings.Split(text, "**")[0]
+
 	return models.AssistantMsg(text)
 }
 func (n *TreeNode) Save() {
@@ -107,6 +114,9 @@ func (node *TreeNode) BestScoreNode() (bestChild *TreeNode) {
 	value := float64(0)
 	NodesMap.IterCb(func(key string, node *TreeNode) {
 		score, err := node.Score()
+		if node.Layer > 1 {
+			score = score + math.Log10(float64(node.Layer))
+		}
 		if err != nil {
 			return
 		}
