@@ -6,6 +6,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/doptime/doptime/db"
 	cmap "github.com/orcaman/concurrent-map/v2"
@@ -27,7 +28,7 @@ type TreeNode struct {
 }
 
 var GetID = func() func(layter int) string {
-	var IDHeader string = db.NanoId(4)
+	var IDHeader string = time.Now().Format("01-02-15-04")
 	var GlobalID int = 0
 	return func(layter int) string {
 		GlobalID++
@@ -42,8 +43,12 @@ func (parent *TreeNode) NewChild() (newNode *TreeNode) {
 	return newNode
 }
 
-func ReadFloatAfterTag(tag, s string) (float64, error) {
-	ind := strings.Index(s, tag)
+func ReadFloatAfterTag(s string, tags ...string) (float64, error) {
+	ind, tag := -1, ""
+	for i := 0; i < len(tags) && ind < 0; i++ {
+		tag = tags[i]
+		ind = strings.Index(s, tag)
+	}
 	if ind < 0 {
 		return 0, nil
 	}
@@ -73,12 +78,7 @@ func (node *TreeNode) Score() (Score float64, err error) {
 	if node.Verification == nil || len(node.Verification.Content) == 0 {
 		return 0, fmt.Errorf("no verification found")
 	}
-	s := strings.ToLower(node.Verification.Content)
-	node.score, err = ReadFloatAfterTag("overall score:", s)
-	if err != nil || node.score == 0 {
-		node.score, err = ReadFloatAfterTag("evaluation:", s)
-	}
-
+	node.score, err = ReadFloatAfterTag(strings.ToLower(node.Verification.Content), "overall score:", "evaluation:", "score:", "percentage:")
 	return node.score, err
 }
 func (node *TreeNode) Refinement(leadingtext string) (refinementMsg *models.Message) {
@@ -95,7 +95,7 @@ func (node *TreeNode) Refinement(leadingtext string) (refinementMsg *models.Mess
 	text = strings.Split(text, "##")[0]
 	text = strings.Split(text, "**")[0]
 
-	return models.AssistantMsg(text)
+	return models.MsgOfAssistant(text)
 }
 func (n *TreeNode) Save() {
 	KeyTreeNode.HSet(n.Id, n)

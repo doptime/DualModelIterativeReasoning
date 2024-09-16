@@ -10,75 +10,89 @@ import (
 
 func (node *TreeNode) SequentialSolve(TryNum int) (err error) {
 
-	SolverMesseges := models.UserMsg(`Given a question, and solution together with Improvement Suggestions. Further improve the solution to solve the problem, by follow these steps:
-1. Problem Analysis:
-Analyze the given problem, solution and refinement ideas. Identify key components, constraints, and potential approaches.
+	SolverMesseges := models.MsgOfUser(`Given a question, and solution together with Improvement Suggestions. Further improve the solution to solve the problem, by follow these steps:
 
-2. Plan reproposed:
-- Devise a step-by-step plan to solve the problem. (don't actually start solving yet, just make a plan)
+## 1. Problem Analysis and Intent Navigation
+	- Holistic Problem Exploration:
+		- Analyze the given problem from multiple perspectives.
+		- Identify potential underlying issues or broader contexts that may not be immediately apparent.
+		- Consider various stakeholders and their potential concerns.
 
-3. Solving The Question Step by Step, According to the Plan:
+	- Intent Discovery:
+		- Probe deeper into the possible motivations behind the question.
+		- Identify any implicit assumptions or biases in the problem statement.
+		- Consider how different framings of the problem might lead to different solutions.
+
+## 2. Question Reformulation:
+	Based on your holistic analysis and intent discovery, reformulate the question to capture its essence more accurately.
+	Provide a brief explanation of why this reformulation might lead to a more comprehensive or insightful answer.
+
+## 3. Plan reproposed:
+- Devise a step-by-step plan to solve the Question. (don't actually start solving yet, just make a plan)
+
+## 4. Solving The Question Step by Step, According to the Plan:
 Use Chain of Thought ,i.e., Work through the Plan Step by Step, write the full solution for each plan steps. until  finally answer the question.
 
-4. Conclusion:
+## 5. Conclusion:
 
-5. Evaluate Solution Refinement:
+## 6. Evaluate Solution Refinement:
 Evaluate the strengths and weaknesses of the solution to the question`)
 
-	VerifierMessege := models.UserMsg(`Given a question and Problem Analysis, Plan Proposal, Solution and it's refinement proposal, Follow these steps:
-** Improvement Suggestions **
-- reasoning to raise a most powerful plan to overturn the conclusion
-- reasoning to remove redundancy in the plane or solution to keep it simple and concise
-- Provide 1-2 specific suggestions for how the solution plan could be improved.
-- propose one step plan, optional
-- propose next sub plan along with answer, to a plan optional
-- propose how to answer a step of plan again, optional
-- propose rephrase question or subquestion to a plan, optional
-
-
-** Multi-dimensional Scoring **
-Dimensions to score:
-Reasoning: <How likely is it that the conclusion will be overturned?>
-Score Given: <score ,[-30-0]> 
-
-Solution Accuracy and Error-Free:
-Reasoning: <How accurate and error-free is the solution?>
-Score Given: <score ,[0-10]> 
-
-Solution Correctness:
-Reasoning: <How thoroughly does it address all aspects of the problem?>
-Score Given: <score ,[0-10]> 
-
-Solution Completeness:
-Reasoning: <how complete is the solution?>
-Score Given: <score ,[0-10]> 
-
-Solution Clarity: 
-Reasoning: <How clear and easy to understand is the explanation?>
-Score Given: <score ,[0-10]> 
-
-Solution Efficiency: 
-Reasoning: <How optimal is the approach in terms of time/resource usage?>
-Score Given: <score ,[0-10]> 
-
-Solution Redundancy: 
-Reasoning: < Is there one or more step can be  deleted or simplified>
-Score Given: <score ,[-20-0]> 
-
-** Overall Evaluation **
-Sum Score Calculation: 
-- calculate step by step to get the sum of the above scores 
-Overall Evaluation: <display calculated score > 
-`)
-
 	var bestAnswerNode *TreeNode = MCTSTrajectory.BestScoreNode()
+	if bestAnswerNode == nil {
+		fmt.Println("Error: bestAnswerNode is nil")
+		return nil
+	}
 	for i := 0; i < TryNum; i++ {
 		NewBestTrail := bestAnswerNode.NewChild()
 		if NewBestTrail.Solution, err = models.SLM1.AskLLM(0.7, false, SysPromptBasic, MCTSTrajectory.UserMsg, bestAnswerNode.Solution, bestAnswerNode.Refinement("improvement Suggestions"), SolverMesseges); err != nil {
 			fmt.Println("Error: ", err)
 			continue
 		}
-		if NewBestTrail.Verification, err = models.SLM2.AskLLM(0.7, false, MCTSTrajectory.UserMsg, NewBestTrail.Solution, VerifierMessege); err != nil {
+		if NewBestTrail.Verification, err = models.SLM2.AskLLM(0.7, false, MCTSTrajectory.UserMsg, NewBestTrail.Solution, models.MsgOfUser(`
+Given a question, Problem Analysis, Plan Proposal, Solution, and its refinement proposal, follow these steps:
+
+# Critical Analysis and Improvement Suggestions
+
+## 1. Verify Problem Analysis and Intent Navigation
+   - Evaluate the merits/weaknesses of Intent Navigation
+   - What is dummb requirements in the problem analysis?
+   - What is Redundant process in the problem analysis?
+
+## 2. Verify Question Reformulated:
+   - Evaluate the merits/weaknesses of Question Reformulated
+   - Is it still fidelity to the original question?
+   - Is it usefull & easy to take into action?	
+   - Is it logically sound?
+
+## 3. Verify the plan step by step:
+   - Evaluate the weaknesses of the solution plan.
+   - Is it deeply & very specificlly dived into the problem?
+
+## 4. Verify the solution step by step:
+   - Evaluate the weaknesses of the solution.
+
+Methodology:
+	1. Redundancy and Simplification:
+	- Identify any redundant or unnecessary steps in the plan or solution.
+	- Suggest how to simplify the approach while maintaining its effectiveness.
+
+	2. Specific Improvements:
+	- Provide specific, actionable suggestions to improve the solution plan.
+	- For each suggestion, explain its potential impact on the overall solution.
+
+	3. Alternative Perspective:
+	- Propose the strongest possible argument or approach that could overturn the current conclusion.
+	- Explain the reasoning behind this alternative perspective.
+
+	4. Optional Refinements (choose 1-2 if applicable):
+	- Propose a single-step plan to address a weakness in the current solution.
+	- Suggest a sub-plan along with its potential answer to deepen the solution.
+	- Recommend how to rephrase a step or sub-question for clarity or better focus.
+
+Final Improvement Conclusion:
+- Provide a concise summary of the most crucial improvements needed, emphasizing self-criticism and consideration of alternative perspectives.
+		`)); err != nil {
 			fmt.Println("Error: ", err)
 			continue
 		}

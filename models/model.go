@@ -24,7 +24,8 @@ var SLM2 = &Model{
 	//ModelName: "neuralmagic/Qwen2-7B-Instruct-quantized.w8a16",
 	//Url:       "http://gpu.lan:8006/v1/chat/completions",
 	//ModelName: "neuralmagic/Phi-3-medium-128k-instruct-quantized.w4a16",
-	ModelName: "neuralmagic/gemma-2-9b-it-quantized.w4a16",
+	//ModelName: "neuralmagic/gemma-2-9b-it-quantized.w4a16",
+	ModelName: "shuyuej/Mistral-Nemo-Instruct-2407-GPTQ",
 	Url:       "http://gpu.lan:8003/v1/chat/completions",
 	ApiKey:    "token-deaf",
 }
@@ -40,14 +41,11 @@ func (msg *Message) String() string {
 	}
 	return msg.Role + ": " + msg.Content
 }
-func UserMsg(msg string) *Message {
+func MsgOfUser(msg string) *Message {
 	return &Message{Role: "user", Content: msg}
 }
-func AssistantMsg(msg string) *Message {
+func MsgOfAssistant(msg string) *Message {
 	return &Message{Role: "assistant", Content: msg}
-}
-func SystemMsg(msg string) *Message {
-	return &Message{Role: "system", Content: msg}
 }
 
 type ChatGPTResponse struct {
@@ -140,7 +138,7 @@ func handleStreamResponse(resp *http.Response) (*Message, error) {
 			fullContent.WriteString(chunk.Choices[0].Delta.Content)
 		}
 	}
-	return AssistantMsg(fullContent.String()), nil
+	return MsgOfAssistant(fullContent.String()), nil
 }
 
 func handleNonStreamResponse(resp *http.Response) (*Message, error) {
@@ -156,7 +154,7 @@ func handleNonStreamResponse(resp *http.Response) (*Message, error) {
 	}
 
 	if len(response.Choices) > 0 {
-		return AssistantMsg(response.Choices[0].Message.Content), nil
+		return MsgOfAssistant(response.Choices[0].Message.Content), nil
 	}
 
 	return nil, nil

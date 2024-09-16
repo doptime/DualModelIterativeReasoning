@@ -23,7 +23,7 @@ func (node *TreeNode) ParalleSolve(difficulty float64) (err error) {
 	numParalellUnfolding := int(2 * difficulty)
 	for i := len(MCTSTrajectory.Children()); i < numParalellUnfolding; i++ {
 		childNode := MCTSTrajectory.NewChild()
-		childNode.Solution, err = models.SLM1.AskLLM(0.7, false, SysPromptBasic, MCTSTrajectory.UserMsg, models.UserMsg(`Now, follow these steps:
+		childNode.Solution, err = models.SLM1.AskLLM(0.7, false, SysPromptBasic, MCTSTrajectory.UserMsg, models.MsgOfUser(`Now, follow these steps:
 1. Problem Analysis:
 Analyze the given problem. Identify key components, constraints, and potential approaches.
 
@@ -42,51 +42,71 @@ Evaluate the strengths and weaknesses of Plan Proposal
 			continue
 		}
 		fmt.Println("The Solution is: ", childNode.Solution.Content)
-		CheckerMesseges := models.UserMsg(`Given a question and Problem Analysis, Plan Proposal, Solution and it's refinement proposal, Follow these steps:
-** Improvement Suggestions **
-- reasoning to raise a most powerful plan to overturn the conclusion
-- reasoning to remove redundancy in the plane or solution to keep it simple and concise
-- Provide 1-2 specific suggestions for how the solution plan could be improved.
-- propose one step plan, optional
-- propose next sub plan along with answer, to a plan optional
-- propose how to answer a step of plan again, optional
-- propose rephrase question or subquestion to a plan, optional
-
-** Multi-dimensional Scoring **
-Dimensions to score:
-Reasoning: <How likely is it that the conclusion will be overturned?>
-Score Given: <score ,[-30-0]> 
-
-Solution Accuracy and Error-Free:
-Reasoning: <How accurate and error-free is the solution?>
-Score Given: <score ,[0-10]> 
-
-Solution Correctness:
-Reasoning: <How thoroughly does it address all aspects of the problem?>
-Score Given: <score ,[0-10]> 
-
-Solution Completeness:
-Reasoning: <how complete is the solution?>
-Score Given: <score ,[0-10]> 
-
-Solution Clarity: 
-Reasoning: <How clear and easy to understand is the explanation?>
-Score Given: <score ,[0-10]> 
-
-Solution Efficiency: 
-Reasoning: <How optimal is the approach in terms of time/resource usage?>
-Score Given: <score ,[0-10]> 
-
-Solution Redundancy: 
-Reasoning: < Is there one or more step can be  deleted or simplified>
-Score Given: <score ,[-20-0]> 
-
-** Overall Evaluation **
-Sum Score Calculation: 
-- calculate step by step to get the sum of the above scores 
-Overall Evaluation: <display calculated Sum Score > 
-`)
-		if childNode.Verification, err = models.SLM2.AskLLM(0.7, false, SysPromptBasic, MCTSTrajectory.UserMsg, childNode.Solution, CheckerMesseges); err != nil {
+		if childNode.Verification, err = models.SLM2.AskLLM(0.7, false, models.MsgOfUser(SysPromptBasic.Content+"\r"+MCTSTrajectory.UserMsg.Content), childNode.Solution, models.MsgOfUser(`Given a question, Problem Analysis, Plan Proposal, Solution, and its refinement proposal, follow these steps:
+		
+		** Critical Analysis and Improvement Suggestions **
+		1. Alternative Perspective:
+		   - Propose the strongest possible argument or approach that could overturn the current conclusion.
+		   - Explain the reasoning behind this alternative perspective.
+		
+		2. Redundancy and Simplification:
+		   - Identify any redundant or unnecessary steps in the plan or solution.
+		   - Suggest how to simplify the approach while maintaining its effectiveness.
+		
+		3. Specific Improvements:
+		   - Provide 2-3 specific, actionable suggestions to improve the solution plan.
+		   - For each suggestion, explain its potential impact on the overall solution.
+		
+		4. Optional Refinements (choose 1-2 if applicable):
+		   - Propose a single-step plan to address a weakness in the current solution.
+		   - Suggest a sub-plan along with its potential answer to deepen the solution.
+		   - Recommend how to rephrase a step or sub-question for clarity or better focus.
+		
+		** Multi-dimensional Scoring **
+		Score each dimension from 0-10, where 0 is the worst and 10 is the best. Provide a brief justification for each score.
+		
+		1. Reasoning Quality:
+		   Justification: <1-2 sentences explaining the score>
+		   Score: [0-10]
+		
+		2. Solution Accuracy:
+		   Justification: <1-2 sentences explaining the score>
+		   Score: [0-10]
+		
+		3. Problem Coverage:
+		   Justification: <1-2 sentences explaining the score>
+		   Score: [0-10]
+		
+		4. Clarity of Explanation:
+		   Justification: <1-2 sentences explaining the score>
+		   Score: [0-10]
+		
+		5. Efficiency of Approach:
+		   Justification: <1-2 sentences explaining the score>
+		   Score: [0-10]
+		
+		6. Self-Criticism and Alternative Perspectives:
+		   Justification: <1-2 sentences explaining the score>
+		   Score: [0-10]
+		
+		** Overall Evaluation **
+		Total Score Calculation:
+		- Sum up the scores from all six dimensions
+		- Maximum possible score: 60
+		
+		Overall Score: <display calculated total score>
+		Percentage: <(Total Score / 60) * 100%>
+		
+		Interpretation:
+		- 90-100%: Excellent solution with strong self-criticism
+		- 70-89%: Good solution with some self-reflection, minor improvements needed
+		- 50-69%: Average solution, more critical thinking and alternative perspectives needed
+		- Below 50%: Poor solution, lacks self-criticism and alternative viewpoints
+		
+		Final Recommendations:
+		- Identify the lowest-scoring dimension and suggest a focused approach to improve it in the next iteration.
+		- Provide a concise summary of the most crucial improvements needed, emphasizing self-criticism and consideration of alternative perspectives.
+		`)); err != nil {
 			fmt.Println("Error: ", err)
 			continue
 		}
