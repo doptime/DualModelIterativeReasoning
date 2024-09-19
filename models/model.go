@@ -1,6 +1,7 @@
 package models
 
 import (
+	"DualModelIterativeReasoning/message"
 	"bytes"
 	"encoding/json"
 	"io"
@@ -30,24 +31,6 @@ var SLM2 = &Model{
 	ApiKey:    "token-deaf",
 }
 
-type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-func (msg *Message) String() string {
-	if msg == nil {
-		return ""
-	}
-	return msg.Role + ": " + msg.Content
-}
-func MsgOfUser(msg string) *Message {
-	return &Message{Role: "user", Content: msg}
-}
-func MsgOfAssistant(msg string) *Message {
-	return &Message{Role: "assistant", Content: msg}
-}
-
 type ChatGPTResponse struct {
 	Id      string `json:"id"`
 	Object  string `json:"object"`
@@ -75,11 +58,11 @@ type ChatGPTResponse struct {
 	PromptLogprobs interface{} `json:"prompt_logprobs"`
 }
 
-func (m *Model) AskLLM(temperature float64, stream bool, message ...*Message) (r *Message, err error) {
-	messages := make([]Message, 0, len(message))
-	for _, msg := range message {
-		if msg != nil {
-			messages = append(messages, *msg)
+func (m *Model) AskLLM(temperature float64, stream bool, msg ...*message.Message) (r *message.Message, err error) {
+	messages := make([]*message.Message, 0, len(msg))
+	for _, _msg := range msg {
+		if _msg != nil {
+			messages = append(messages, _msg)
 		}
 	}
 	// Prepare the payload
@@ -122,7 +105,7 @@ func (m *Model) AskLLM(temperature float64, stream bool, message ...*Message) (r
 	}
 }
 
-func handleStreamResponse(resp *http.Response) (*Message, error) {
+func handleStreamResponse(resp *http.Response) (*message.Message, error) {
 	var fullContent strings.Builder
 	decoder := json.NewDecoder(resp.Body)
 	for {
@@ -138,10 +121,10 @@ func handleStreamResponse(resp *http.Response) (*Message, error) {
 			fullContent.WriteString(chunk.Choices[0].Delta.Content)
 		}
 	}
-	return MsgOfAssistant(fullContent.String()), nil
+	return message.Assistant(fullContent.String()), nil
 }
 
-func handleNonStreamResponse(resp *http.Response) (*Message, error) {
+func handleNonStreamResponse(resp *http.Response) (*message.Message, error) {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -154,7 +137,7 @@ func handleNonStreamResponse(resp *http.Response) (*Message, error) {
 	}
 
 	if len(response.Choices) > 0 {
-		return MsgOfAssistant(response.Choices[0].Message.Content), nil
+		return message.Assistant(response.Choices[0].Message.Content), nil
 	}
 
 	return nil, nil

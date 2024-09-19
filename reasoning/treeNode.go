@@ -1,9 +1,8 @@
 package reasoning
 
 import (
-	"DualModelIterativeReasoning/models"
+	"DualModelIterativeReasoning/message"
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -16,15 +15,15 @@ var KeyTreeNode = db.HashKey[string, *TreeNode]()
 var NodesMap = cmap.New[*TreeNode]()
 
 type TreeNode struct {
-	Id         string
-	ParentId   string
-	Layer      int
-	Difficulty float64
+	Id           string
+	ParentId     string
+	Layer        int
+	Difficulty   float64
+	BestSolution bool
 
-	UserMsg      *models.Message
-	Solution     *models.Message
-	Verification *models.Message
-	score        float64 `msgpack:"-"`
+	UserMsg  *message.Message
+	Solution *message.Message
+	Complete bool
 }
 
 var GetID = func() func(layter int) string {
@@ -71,32 +70,6 @@ func ReadFloatAfterTag(s string, tags ...string) (float64, error) {
 	return strconv.ParseFloat(s, 64)
 }
 
-func (node *TreeNode) Score() (Score float64, err error) {
-	if node.score != 0 {
-		return node.score, nil
-	}
-	if node.Verification == nil || len(node.Verification.Content) == 0 {
-		return 0, fmt.Errorf("no verification found")
-	}
-	node.score, err = ReadFloatAfterTag(strings.ToLower(node.Verification.Content), "overall score:", "evaluation:", "score:", "percentage:")
-	return node.score, err
-}
-func (node *TreeNode) Refinement(leadingtext string) (refinementMsg *models.Message) {
-	if node.Verification == nil || len(node.Verification.Content) == 0 {
-		return nil
-	}
-	leadingtext = strings.ToLower(leadingtext)
-	s := strings.ToLower(node.Verification.Content)
-	ind := strings.Index(s, leadingtext)
-	if ind < 0 {
-		return nil
-	}
-	text := strings.TrimSpace(node.Verification.Content[ind : len(node.Verification.Content)-1])
-	text = strings.Split(text, "##")[0]
-	text = strings.Split(text, "**")[0]
-
-	return models.MsgOfAssistant(text)
-}
 func (n *TreeNode) Save() {
 	KeyTreeNode.HSet(n.Id, n)
 }
@@ -110,23 +83,24 @@ func (node *TreeNode) Children() (children []*TreeNode) {
 	return children
 
 }
-func (node *TreeNode) BestScoreNode() (bestChild *TreeNode) {
-	value := float64(0)
-	NodesMap.IterCb(func(key string, node *TreeNode) {
-		score, err := node.Score()
-		if node.Layer > 1 {
-			score = score + math.Log10(float64(node.Layer))
-		}
-		if err != nil {
-			return
-		}
-		if score > value && node.Layer >= 1 {
-			value = score
-			bestChild = node
-		}
-		if bestChild != nil && score == value && node.Layer >= bestChild.Layer {
-			bestChild = node
-		}
-	})
-	return bestChild
-}
+
+// func (node *TreeNode) BestScoreNode() (bestChild *TreeNode) {
+// 	value := float64(0)
+// 	NodesMap.IterCb(func(key string, node *TreeNode) {
+// 		score, err := node.Score()
+// 		if node.Layer > 1 {
+// 			score = score + math.Log10(float64(node.Layer))
+// 		}
+// 		if err != nil {
+// 			return
+// 		}
+// 		if score > value && node.Layer >= 1 {
+// 			value = score
+// 			bestChild = node
+// 		}
+// 		if bestChild != nil && score == value && node.Layer >= bestChild.Layer {
+// 			bestChild = node
+// 		}
+// 	})
+// 	return bestChild
+// }

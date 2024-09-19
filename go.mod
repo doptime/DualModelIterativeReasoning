@@ -6,6 +6,7 @@ require (
 	github.com/atotto/clipboard v0.1.4
 	github.com/doptime/doptime v0.0.0-20240903064453-c8690cd7b736
 	github.com/orcaman/concurrent-map/v2 v2.0.1
+	golang.org/x/sync v0.7.0
 )
 
 require (
@@ -21,6 +22,5 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	golang.org/x/net v0.21.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.22.0 // indirect
 )
