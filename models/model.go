@@ -16,7 +16,10 @@ type Model struct {
 }
 
 var SLM1 = &Model{
-	ModelName: "neuralmagic/Meta-Llama-3.1-8B-Instruct-quantized.w4a16",
+	//ModelName: "Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4",
+	//ModelName: "neuralmagic/Meta-Llama-3.1-8B-Instruct-quantized.w4a16",
+	//ModelName: "AMead10/Mistral-Small-Instruct-2409-awq",
+	ModelName: "casperhansen/mistral-nemo-instruct-2407-awq",
 	Url:       "http://gpu.lan:8007/v1/chat/completions",
 	ApiKey:    "token-deaf",
 }
@@ -26,9 +29,11 @@ var SLM2 = &Model{
 	//Url:       "http://gpu.lan:8006/v1/chat/completions",
 	//ModelName: "neuralmagic/Phi-3-medium-128k-instruct-quantized.w4a16",
 	//ModelName: "neuralmagic/gemma-2-9b-it-quantized.w4a16",
-	ModelName: "shuyuej/Mistral-Nemo-Instruct-2407-GPTQ",
-	Url:       "http://gpu.lan:8003/v1/chat/completions",
-	ApiKey:    "token-deaf",
+	//ModelName: "shuyuej/Mistral-Nemo-Instruct-2407-GPTQ",
+	ModelName: "Qwen/Qwen2.5-14B-Instruct-AWQ",
+	//ModelName: "Qwen/Qwen2.5-32B-Instruct-AWQ",
+	Url:    "http://gpu.lan:8003/v1/chat/completions",
+	ApiKey: "token-deaf",
 }
 
 type ChatGPTResponse struct {
