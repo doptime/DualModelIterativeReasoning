@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/atotto/clipboard"
 	"golang.org/x/sync/errgroup"
@@ -68,7 +69,7 @@ func BuildDualModelIterativeReasoningMessages(problem string, preSolution1 *mess
 	}
 
 	prompt.WriteString(`Please take following steps below to perform iterative reasoning:
-Step 1: Reasoning to Make revisions to the previous Problem Reformulated:
+## Step 1: Reasoning to Make revisions to the previous Problem Reformulated:
 	Evaluate Problem Reformulation (step 1.2 in previous solutions) and make revisions (if applicable)
 		- Holistic Problem Exploration revisions:
 			- Analyze the given problem from multiple perspectives.
@@ -81,12 +82,12 @@ Step 1: Reasoning to Make revisions to the previous Problem Reformulated:
 		- Key Factors Identification:
 			- List critical factors that may influence the problem's solution.
 
-Step 2: ** Problem Reformulated ** (Iteration previous Problem Reformulation if applicable, improve according to the above analysis):
+## Step 2: ** Problem Reformulated ** (Iteration previous Problem Reformulation if applicable, improve according to the above analysis):
 	- Provide the Context of the problem.
 	- State the Constraints of the problem.
 	- Present a reformulated problem statement (problem to solve) that captures its essence more accurately.
 
-Step 3: reasoing to make revisions to the previous step-by-stey solutions (Chain of Thought) 
+## Step 3: reasoing to make revisions to the previous step-by-stey solutions (Chain of Thought) 
 	Now Fork on the best solution in previous solutions to make revisions:
 	- Evaluate the weaknesses of the solution plan in previous solution step.
 	- reasoing to Add or remove steps in the solution plan.
@@ -100,14 +101,14 @@ Step 3: reasoing to make revisions to the previous step-by-stey solutions (Chain
 		- Continue to focus on the core of the problem and avoid deviating from the topic
 		- Be bold and innovative while retaining the advantages of the original solution
 
-Step 4: ** New step-by-step solution Generated ** (Chain of Thought) :
-	- Iteration previous solutions if applicable
+## Step 4: ** New step-by-step solution Generated ** (Chain of Thought) :
+	- Iteration to improve the best solution in previous solutions if applicable
  	- Based on the above analysis, write out the full step-by-step solution plan for the problem.
-	- These improvements should absorb the advantages of the two solutions and try to make up for their shortcomings.
+	- before unfolding a step. explain the plan of the step in the leading sentence. (e.g. "Step 1: First, I will ...", "Step 2: Next, I will ...")
 
-Step 5: Problem Solved Reasoning:
+## Step 5: Problem Solved Reasoning:
 	-Reasoning whether the original problem is perfectly solved by the generated solution above (No more improvement Needed)
-	- conclusion: { solved: <true or false>}
+	-conclusion: { solved: <true or false>}
 `)
 	return message.User(prompt.String())
 }
@@ -139,8 +140,9 @@ func (node *TreeNode) ParalleBeamSearchUsingDualModelIterativeReasoning(Depty in
 				node.Save()
 			}
 		}
-
 		var stringBuilder strings.Builder
+		//write time of now
+		stringBuilder.WriteString("\n\n# Time: " + time.Now().Format("2006-01-02 15:04:05") + " \n")
 		stringBuilder.WriteString("\n\n# Round:" + strconv.Itoa(LoopCnt+1) + " Model: " + slm.ModelName + " \n")
 		stringBuilder.WriteString("\n\n# Solution1:\n")
 		stringBuilder.WriteString(childNode1.Solution.Content)
