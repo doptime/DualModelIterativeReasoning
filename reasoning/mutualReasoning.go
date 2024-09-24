@@ -3,7 +3,9 @@ package reasoning
 import (
 	"DualModelIterativeReasoning/message"
 	"DualModelIterativeReasoning/models"
+	"DualModelIterativeReasoning/query"
 	"context"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -51,7 +53,7 @@ import (
 
 // Finally, summarize the entire reasoning process, explain how the new solution integrates and improves the previous solution, and give the final recommendation.
 
-var SysPromptBasic = "You are a world-class powerfull AI reasoning agent, cooperative, innovative, carefull, reflective and helpfull, you are enthuastic with final & deepest possibility. Together with your AI friend, you are solving problems through structured collaboration.;\n\n"
+var SysPromptBasic = "You are a world-class powerfull AI reasoning agent, cooperative, innovative, carefull, reflective and helpfull, you are enthuastic with final & deepest possibility, your have strong desire to pass this survival test of problem solving. Together with your AI counterpart, you are solving problems through structured collaboration.;\n\n"
 
 func BuildDualModelIterativeReasoningMessages(problem string, preSolution1 *message.Message, preSolution2 *message.Message) (msg *message.Message) {
 	var prompt strings.Builder
@@ -84,7 +86,7 @@ func BuildDualModelIterativeReasoningMessages(problem string, preSolution1 *mess
 
 ## Step 2: ** Problem Reformulated ** (Iteration previous Problem Reformulation if applicable, improve according to the above analysis):
 	- Provide the Context of the problem.
-	- State the Constraints of the problem.
+	- State the Condition/Constraints of the problem.
 	- Present a reformulated problem statement (problem to solve) that captures its essence more accurately.
 
 ## Step 3: reasoing to make revisions to the previous step-by-stey solutions (Chain of Thought) 
@@ -101,7 +103,7 @@ func BuildDualModelIterativeReasoningMessages(problem string, preSolution1 *mess
 		- Continue to focus on the core of the problem and avoid deviating from the topic
 		- Be bold and innovative while retaining the advantages of the original solution
 
-## Step 4: ** New step-by-step solution Generated ** (Chain of Thought) :
+## Step 4: ** Generate Final step-by-step solution ** (Chain of Thought) :
 	- Iteration to improve the best solution in previous solutions if applicable
  	- Based on the above analysis, write out the full step-by-step solution plan for the problem.
 	- before unfolding a step. explain the plan of the step in the leading sentence. (e.g. "Step 1: First, I will ...", "Step 2: Next, I will ...")
@@ -112,7 +114,7 @@ func BuildDualModelIterativeReasoningMessages(problem string, preSolution1 *mess
 `)
 	return message.User(prompt.String())
 }
-func (node *TreeNode) ParalleBeamSearchUsingDualModelIterativeReasoning(Depty int) (err error) {
+func ParalleBeamSearchUsingDualModelIterativeReasoning(node *query.TreeNode, Depty int) (err error) {
 	var Models = []*models.Model{models.SLM1, models.SLM2}
 	parent1, parent2 := node, node
 	regexMatchJsonSolved := regexp.MustCompile(`solved[:" <]*true`)
@@ -133,8 +135,8 @@ func (node *TreeNode) ParalleBeamSearchUsingDualModelIterativeReasoning(Depty in
 		err = g.Wait()
 
 		if childNode1 != nil && childNode1.Solution != nil && childNode2 != nil && childNode2.Solution != nil {
-			for _, node := range []*TreeNode{childNode1, childNode2} {
-				if LoopCnt >= 1 {
+			for _, node := range []*query.TreeNode{childNode1, childNode2} {
+				if LoopCnt >= 13 {
 					node.Complete = regexMatchJsonSolved.MatchString(node.Solution.Content)
 				}
 				node.Save()
@@ -142,8 +144,9 @@ func (node *TreeNode) ParalleBeamSearchUsingDualModelIterativeReasoning(Depty in
 		}
 		var stringBuilder strings.Builder
 		//write time of now
-		stringBuilder.WriteString("\n\n# Time: " + time.Now().Format("2006-01-02 15:04:05") + " \n")
-		stringBuilder.WriteString("\n\n# Round:" + strconv.Itoa(LoopCnt+1) + " Model: " + slm.ModelName + " \n")
+		Title := "\n\n# Time: " + time.Now().Format("2006-01-02 15:04:05") + " \n" + "\n\n# Round:" + strconv.Itoa(LoopCnt+1) + " Model: " + slm.ModelName + " \n"
+		fmt.Println(Title)
+		stringBuilder.WriteString(Title)
 		stringBuilder.WriteString("\n\n# Solution1:\n")
 		stringBuilder.WriteString(childNode1.Solution.Content)
 		stringBuilder.WriteString("\n\n# Solution2:\n")
