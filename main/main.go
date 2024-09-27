@@ -8,7 +8,7 @@ import (
 )
 
 // Perform reasoning
-var MCTSTrajectory = &query.TreeNode{
+var MCTSTrajectory = &query.Query{
 	Id:    "root",
 	Model: models.ModelQwen32B.Name,
 	UserMsg: message.UserMsg(`I have a 9 yrs old daughter, I want's help here with her using a funny | interesting | breath taking | deep-diving | emotion arousing story. 
@@ -33,10 +33,12 @@ func main() {
 	if query.NodesMap.Count() == 0 {
 		query.NodesMap.Set("root", MCTSTrajectory)
 	}
-	problemReformulated, err := batchop.ParallelProblemReformulation(MCTSTrajectory)
+	problemReformulated, err := batchop.ProblemReformulation(MCTSTrajectory)
 	if err != nil {
 		return
 	}
-	batchop.ParallelProblemSolving(problemReformulated)
+	msgBest := batchop.SelectBestNode(problemReformulated...)
+
+	batchop.ProblemSolving(msgBest)
 
 }

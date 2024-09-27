@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func ParallelProblemReformulation(node *query.TreeNode) (msg *query.TreeNode, err error) {
+func ProblemReformulation(node *query.Query) (msg []*query.Query, err error) {
 	var prompt strings.Builder
 	prompt.WriteString("You are a world-class powerfull AI reasoning agent, cooperative, innovative, carefull, reflective and helpfull. Together with your AI counterpart, you are solving problems through structured collaboration.;")
 	prompt.WriteString("#Problem:\n" + node.UserMsg.Content + "\n")
@@ -47,20 +47,13 @@ func ParallelProblemReformulation(node *query.TreeNode) (msg *query.TreeNode, er
 	- State the Condition/Constraints of the problem.
 	- Present a reformulated problem statement (problem to solve) that captures its essence more accurately.
 `)
-	p1, p2, p3, p4 := node.NewChild("ProblemReformulate"), node.NewChild("ProblemReformulate"), node.NewChild("ProblemReformulate"), node.NewChild("ProblemReformulate")
-	p1.UserMsg, p2.UserMsg, p3.UserMsg, p4.UserMsg = message.UserMsg(prompt.String()), message.UserMsg(prompt.String()), message.UserMsg(prompt.String()), message.UserMsg(prompt.String())
-	err = query.AskLLMParallelly(p1, p2, p3, p4)
+	ProblemReformulate := node.NewChild("ProblemReformulate").WithMessage(message.UserMsg(prompt.String())).CloneN(4)
+	err = query.AskLLMParallelly(ProblemReformulate...)
 	if err != nil {
 		return nil, err
 	}
-	CopyToClipboard(p1, p2, p3, p4)
+	CopyToClipboard(ProblemReformulate...)
 	//choose the best problem reformulatied
-	msg, err = ParallelEvaluator(p1, p2, p3, p4)
-	CopyToClipboard(msg)
-	msgBest := msg.Clone()
-	items := strings.Split(msg.AssistantMsg.Content, "Final Reformulated Problem Statement")
-	if len(items) > 0 {
-		msgBest.AssistantMsg.Content = "Problem Reformulated: " + items[1]
-	}
-	return msgBest, err
+	err = ParallelEvaluator(ProblemReformulate...)
+	return ProblemReformulate, err
 }

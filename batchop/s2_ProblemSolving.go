@@ -2,11 +2,12 @@ package batchop
 
 import (
 	"DualModelIterativeReasoning/message"
+	"DualModelIterativeReasoning/models"
 	"DualModelIterativeReasoning/query"
 	"DualModelIterativeReasoning/tools"
 )
 
-func generateProblemSolvingPrompt(node *query.TreeNode, formerSolutionGenerated *message.Message) (msg *message.Message) {
+func generateProblemSolvingPrompt(node *query.Query, formerSolutionGenerated *message.Message) (msg *message.Message) {
 	prompt := "You are a world-class powerfull AI reasoning agent, cooperative, innovative, carefull, reflective and helpfull. Together with your AI counterpart, you are solving problems through structured collaboration.;"
 	prompt += "Problem Reformulated:\n" + node.UserMsg.Content + "\n\n"
 	if formerSolutionGenerated != nil && formerSolutionGenerated.Content != "" {
@@ -37,20 +38,21 @@ func generateProblemSolvingPrompt(node *query.TreeNode, formerSolutionGenerated 
 	return message.UserMsg(prompt)
 }
 
-func ParallelProblemSolving(node *query.TreeNode) (msg *query.TreeNode, err error) {
+func ProblemSolving(node *query.Query) (msg []*query.Query, err error) {
 	//Step 1: generate solutions
-	problemToSolve := node.NewChild("ProblemSolveIter1")
-	problemToSolve.UserMsg = generateProblemSolvingPrompt(node, nil)
-	ProblemIter1 := problemToSolve.CloneN(4)
-	err = query.AskLLMParallelly(ProblemIter1...)
+	UserMsg := generateProblemSolvingPrompt(node, nil)
+	problemToSolve := node.NewChildren("SolutionIter", UserMsg, UserMsg, UserMsg, UserMsg)
+	WithModel(models.ModelMistralSmall.Name, problemToSolve...)
+
+	err = query.AskLLMParallelly(problemToSolve...)
 	if err != nil {
 		return nil, err
 	}
-	CopyToClipboard(ProblemIter1...)
+	CopyToClipboard(problemToSolve...)
 
-	ProblemIter2 := node.NewChild("ProblemSolveIter2").CloneN(4)
+	ProblemIter2 := node.NewChild("SolutionIter").CloneN(4)
 	for i := 0; i < 4; i++ {
-		ProblemIter2[i].UserMsg = generateProblemSolvingPrompt(node, ProblemIter1[i].AssistantMsg)
+		ProblemIter2[i].WithMessage(generateProblemSolvingPrompt(node, problemToSolve[i].AssistantMsg))
 	}
 	err = query.AskLLMParallelly(ProblemIter2...)
 	if err != nil {
@@ -59,12 +61,9 @@ func ParallelProblemSolving(node *query.TreeNode) (msg *query.TreeNode, err erro
 	CopyToClipboard(ProblemIter2...)
 
 	//Step3: choose the best problem reformulatied
-	msg, err = ParallelEvaluator(ProblemIter2...)
-	CopyToClipboard(msg)
-	msgBest := msg.Clone()
-	if s := tools.ReadMarkdownTagOut(msgBest.AssistantMsg.Content, "Problem Reformulated"); len(s) > 0 {
-		msgBest.AssistantMsg.Content = s
+	err = ParallelEvaluator(ProblemIter2...)
+	if err != nil {
+		return nil, err
 	}
-	msgBest.Save()
-	return msgBest, err
+	return ProblemIter2, err
 }

@@ -1,14 +1,15 @@
 package batchop
 
 import (
+	"DualModelIterativeReasoning/models"
 	"DualModelIterativeReasoning/query"
 	"DualModelIterativeReasoning/tools"
 	"fmt"
 )
 
-func ParallelEvaluator(node ...*query.TreeNode) (best *query.TreeNode, err error) {
+func ParallelEvaluator(node ...*query.Query) (err error) {
 	if len(node) == 0 {
-		return nil, fmt.Errorf("no nodes to evaluate")
+		return fmt.Errorf("no nodes to evaluate")
 	}
 	prompt := `You are a creative evaluator. Please evaluate the given inputs and outputs as follows and give an overall rating at the end:
 
@@ -45,22 +46,16 @@ func ParallelEvaluator(node ...*query.TreeNode) (best *query.TreeNode, err error
 
 Please complete these steps in a friendly, easy-to-understand way. Throughout the process, try to balance innovative thinking with practicality. Remember that the final total score is a random expression of overall quality and is not necessarily an average of the other scores.`
 	//deep clone node
-	nodesCloned := make([]*query.TreeNode, len(node))
+	nodesCloned := make([]*query.Query, len(node))
 	for i, v := range node {
 		nodesCloned[i] = v.Clone()
 		nodesCloned[i].UserMsg.Content = prompt + "\n\nHere's what to evaluate:\n" + v.UserMsg.Content
 	}
+	WithModel(models.ModelMistralSmall.Name, nodesCloned...)
 	query.AskLLMParallelly(nodesCloned...)
-	bestScore := float64(0)
-	best = nodesCloned[0]
-	CopyToClipboard(nodesCloned...)
-	for i, v := range nodesCloned {
-		score, e := tools.ReadFloatAfterTag(v.AssistantMsg.Content, "overall_score")
-		if e == nil && score > bestScore {
-			bestScore = score
-			best = node[i]
-		}
+	for _, v := range node {
+		v.EvalScore, _ = tools.ReadFloatAfterTag(v.AssistantMsg.Content, "overall_score")
 	}
-
-	return best, err
+	CopyToClipboard(nodesCloned...)
+	return err
 }

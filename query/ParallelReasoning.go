@@ -6,7 +6,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func AskLLMParallelly(query ...*TreeNode) (err error) {
+func AskLLMParallelly(query ...*Query) (err error) {
 	// exeInGroup := func(g *errgroup.Group, node *TreeNode) {
 	// 	g.Go(func() (err error) {
 	// 		return node.Solute()

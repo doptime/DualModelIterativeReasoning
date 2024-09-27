@@ -111,7 +111,7 @@ func BuildDualModelIterativeReasoningMessages(problem string, preSolution1 *mess
 `)
 	return message.UserMsg(prompt.String())
 }
-func ParalleBeamSearchUsingDualModelIterativeReasoning(node *query.TreeNode, Depty int) (err error) {
+func ParalleBeamSearchUsingDualModelIterativeReasoning(node *query.Query, Depty int) (err error) {
 	var Models = []*models.Model{models.ModelQwen32B, models.ModelPhi3}
 	parent1, parent2 := node, node
 	regexMatchJsonSolved := regexp.MustCompile(`solved[:" <]*true`)
@@ -133,7 +133,7 @@ func ParalleBeamSearchUsingDualModelIterativeReasoning(node *query.TreeNode, Dep
 		err = g.Wait()
 
 		if childNode1 != nil && childNode1.AssistantMsg != nil && childNode2 != nil && childNode2.AssistantMsg != nil {
-			for _, node := range []*query.TreeNode{childNode1, childNode2} {
+			for _, node := range []*query.Query{childNode1, childNode2} {
 				if LoopCnt >= 13 {
 					node.Complete = regexMatchJsonSolved.MatchString(node.AssistantMsg.Content)
 				}
