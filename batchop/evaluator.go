@@ -55,7 +55,7 @@ Please complete these steps in a friendly, easy-to-understand way. Throughout th
 	best = nodesCloned[0]
 	CopyToClipboard(nodesCloned...)
 	for i, v := range nodesCloned {
-		score, e := tools.ReadFloatAfterTag(v.Solution.Content, "overall_score")
+		score, e := tools.ReadFloatAfterTag(v.AssistantMsg.Content, "overall_score")
 		if e == nil && score > bestScore {
 			bestScore = score
 			best = node[i]

@@ -50,7 +50,7 @@ func ParallelProblemSolving(node *query.TreeNode) (msg *query.TreeNode, err erro
 
 	ProblemIter2 := node.NewChild("ProblemSolveIter2").CloneN(4)
 	for i := 0; i < 4; i++ {
-		ProblemIter2[i].UserMsg = generateProblemSolvingPrompt(node, ProblemIter1[i].Solution)
+		ProblemIter2[i].UserMsg = generateProblemSolvingPrompt(node, ProblemIter1[i].AssistantMsg)
 	}
 	err = query.AskLLMParallelly(ProblemIter2...)
 	if err != nil {
@@ -62,8 +62,8 @@ func ParallelProblemSolving(node *query.TreeNode) (msg *query.TreeNode, err erro
 	msg, err = ParallelEvaluator(ProblemIter2...)
 	CopyToClipboard(msg)
 	msgBest := msg.Clone()
-	if s := tools.ReadMarkdownTagOut(msgBest.Solution.Content, "Problem Reformulated"); len(s) > 0 {
-		msgBest.Solution.Content = s
+	if s := tools.ReadMarkdownTagOut(msgBest.AssistantMsg.Content, "Problem Reformulated"); len(s) > 0 {
+		msgBest.AssistantMsg.Content = s
 	}
 	msgBest.Save()
 	return msgBest, err

@@ -6,6 +6,7 @@ import (
 	"DualModelIterativeReasoning/query"
 	"context"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"golang.org/x/sync/errgroup"
@@ -117,24 +118,24 @@ func ParalleBeamSearchUsingDualModelIterativeReasoning(node *query.TreeNode, Dep
 	var LoopCnt = 0
 	for ; ; LoopCnt++ {
 		slm := Models[LoopCnt%len(Models)]
-		Stage := "iter_" + string(LoopCnt)
+		Stage := "iter_" + strconv.Itoa(LoopCnt)
 		childNode1, childNode2 := parent1.NewChild(Stage), parent2.NewChild(Stage)
 		msg := BuildDualModelIterativeReasoningMessages(node.UserMsg.Content, parent1.UserMsg, parent2.UserMsg)
 		g, _ := errgroup.WithContext(context.Background())
 		g.Go(func() (err error) {
-			childNode1.Solution, err = slm.AskLLM(0.7, false, msg)
+			childNode1.AssistantMsg, err = slm.AskLLM(0.7, false, msg)
 			return err
 		})
 		g.Go(func() (err error) {
-			childNode2.Solution, err = slm.AskLLM(0.7, false, msg)
+			childNode2.AssistantMsg, err = slm.AskLLM(0.7, false, msg)
 			return err
 		})
 		err = g.Wait()
 
-		if childNode1 != nil && childNode1.Solution != nil && childNode2 != nil && childNode2.Solution != nil {
+		if childNode1 != nil && childNode1.AssistantMsg != nil && childNode2 != nil && childNode2.AssistantMsg != nil {
 			for _, node := range []*query.TreeNode{childNode1, childNode2} {
 				if LoopCnt >= 13 {
-					node.Complete = regexMatchJsonSolved.MatchString(node.Solution.Content)
+					node.Complete = regexMatchJsonSolved.MatchString(node.AssistantMsg.Content)
 				}
 				node.Save()
 			}

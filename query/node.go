@@ -21,10 +21,10 @@ type TreeNode struct {
 
 	Model string
 
-	SysMsg    *message.Message
-	UserMsg   *message.Message
-	Solution  *message.Message
-	EvalScore float64
+	SysMsg       *message.Message
+	UserMsg      *message.Message
+	AssistantMsg *message.Message
+	EvalScore    float64
 
 	Complete bool
 }
@@ -34,6 +34,20 @@ func (parent *TreeNode) NewChild(Stage string) (newNode *TreeNode) {
 	CreateAt := time.Now().Unix()
 	newNode = &TreeNode{Id: id, RootId: parent.RootId, Stage: Stage, TimeAt: CreateAt, Model: parent.Model}
 	NodesMap.Set(id, newNode)
+	return newNode
+}
+func (parent *TreeNode) NewChildren(Stage string, msgs ...*message.Message) (newNode []*TreeNode) {
+	for _, msg := range msgs {
+		child := parent.NewChild(Stage)
+		if msg.Role == "system" {
+			child.SysMsg = msg
+		} else if msg.Role == "user" {
+			child.UserMsg = msg
+		} else if msg.Role == "assistant" {
+			child.AssistantMsg = msg
+		}
+		newNode = append(newNode, child)
+	}
 	return newNode
 }
 func (node *TreeNode) Clone() (newNode *TreeNode) {
@@ -49,8 +63,8 @@ func (node *TreeNode) Clone() (newNode *TreeNode) {
 	if node.UserMsg != nil {
 		newNode.UserMsg = message.UserMsg(node.UserMsg.Content)
 	}
-	if node.Solution != nil {
-		newNode.Solution = message.Assistant(node.Solution.Content)
+	if node.AssistantMsg != nil {
+		newNode.AssistantMsg = message.Assistant(node.AssistantMsg.Content)
 	}
 
 	return newNode
@@ -68,7 +82,7 @@ func (node *TreeNode) Solute() (err error) {
 	if !ok {
 		return fmt.Errorf("model not found")
 	}
-	node.Solution, err = model.AskLLM(0.7, false, node.SysMsg, node.UserMsg)
+	node.AssistantMsg, err = model.AskLLM(0.7, false, node.SysMsg, node.UserMsg)
 	node.TimeAt = time.Now().Unix()
 	return err
 
