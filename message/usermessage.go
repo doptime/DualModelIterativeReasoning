@@ -1,5 +1,5 @@
 package message
 
-func User(msg string) *Message {
+func UserMsg(msg string) *Message {
 	return &Message{Role: "user", Content: msg}
 }

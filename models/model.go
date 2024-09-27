@@ -10,32 +10,34 @@ import (
 )
 
 type Model struct {
-	ModelName string
-	Url       string
-	ApiKey    string
+	Name   string
+	Url    string
+	ApiKey string
 }
 
-var SLM1 = &Model{
-	//ModelName: "Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4",
-	//ModelName: "neuralmagic/Meta-Llama-3.1-8B-Instruct-quantized.w4a16",
-	//ModelName: "AMead10/Mistral-Small-Instruct-2409-awq",
-	//ModelName: "casperhansen/mistral-nemo-instruct-2407-awq",
-	ModelName: "Qwen/Qwen2.5-32B-Instruct-AWQ",
-	//ModelName: "Qwen/Qwen2.5-72B-Instruct-AWQ",
-	Url:    "http://gpu.lan:8007/v1/chat/completions",
-	ApiKey: "token-deaf",
-}
+var EndPoint8007 = "http://gpu.lan:8007/v1/chat/completions"
+var EndPoint8006 = "http://gpu.lan:8006/v1/chat/completions"
+var EndPoint8003 = "http://gpu.lan:8003/v1/chat/completions"
 
-var SLM2 = &Model{
-	//ModelName: "neuralmagic/Qwen2-7B-Instruct-quantized.w8a16",
-	//Url:       "http://gpu.lan:8006/v1/chat/completions",
-	//ModelName: "neuralmagic/Phi-3-medium-128k-instruct-quantized.w4a16",
-	//ModelName: "neuralmagic/gemma-2-9b-it-quantized.w4a16",
-	//ModelName: "shuyuej/Mistral-Nemo-Instruct-2407-GPTQ",
-	//ModelName: "Qwen/Qwen2.5-14B-Instruct-AWQ",
-	ModelName: "Qwen/Qwen2.5-32B-Instruct-AWQ",
-	Url:       "http://gpu.lan:8003/v1/chat/completions",
-	ApiKey:    "token-deaf",
+var ModelQwen32B = &Model{Name: "Qwen/Qwen2.5-32B-Instruct-AWQ", Url: EndPoint8007, ApiKey: "token-deaf"}
+var ModelQwen72B = &Model{Name: "Qwen/Qwen2.5-72B-Instruct-AWQ", Url: EndPoint8007, ApiKey: "token-deaf"}
+var ModelQwen14B = &Model{Name: "Qwen/Qwen2.5-14B-Instruct-AWQ", Url: EndPoint8007, ApiKey: "token-deaf"}
+var ModelQwen7B = &Model{Name: "neuralmagic/Qwen2-7B-Instruct-quantized.w8a16", Url: EndPoint8006, ApiKey: "token-deaf"}
+var ModelPhi3 = &Model{Name: "neuralmagic/Phi-3-medium-128k-instruct-quantized.w4a16", Url: EndPoint8006, ApiKey: "token-deaf"}
+var ModelGemma = &Model{Name: "neuralmagic/gemma-2-9b-it-quantized.w4a16", Url: EndPoint8006, ApiKey: "token-deaf"}
+var ModelMistralNemo = &Model{Name: "shuyuej/Mistral-Nemo-Instruct-2407-GPTQ", Url: EndPoint8003, ApiKey: "token-deaf"}
+var ModelMistralSmall = &Model{Name: "AMead10/Mistral-Small-Instruct-2409-awq", Url: EndPoint8003, ApiKey: "token-deaf"}
+var ModelMistralNemoAwq = &Model{Name: "casperhansen/mistral-nemo-instruct-2407-awq", Url: EndPoint8003, ApiKey: "token-deaf"}
+var ModelLlama38b = &Model{Name: "neuralmagic/Meta-Llama-3.1-8B-Instruct-quantized.w4a16", Url: EndPoint8007, ApiKey: "token-deaf"}
+
+var Models = map[string]*Model{
+	ModelQwen32B.Name:     ModelQwen32B,
+	ModelQwen72B.Name:     ModelQwen72B,
+	ModelQwen14B.Name:     ModelQwen14B,
+	ModelQwen7B.Name:      ModelQwen7B,
+	ModelPhi3.Name:        ModelPhi3,
+	ModelGemma.Name:       ModelGemma,
+	ModelMistralNemo.Name: ModelMistralNemo,
 }
 
 type ChatGPTResponse struct {
@@ -74,7 +76,7 @@ func (m *Model) AskLLM(temperature float64, stream bool, msg ...*message.Message
 	}
 	// Prepare the payload
 	payload := map[string]interface{}{
-		"model":       m.ModelName,
+		"model":       m.Name,
 		"messages":    messages,
 		"temperature": temperature,
 		"stream":      stream,

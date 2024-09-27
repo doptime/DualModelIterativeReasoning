@@ -14,60 +14,66 @@ var KeyTreeNode = db.HashKey[string, *TreeNode]()
 var NodesMap = cmap.New[*TreeNode]()
 
 type TreeNode struct {
-	Id       string
-	ParentId string
-	Layer    int
-	Model    string
+	Id     string
+	RootId string
+	Stage  string
+	TimeAt int64
 
-	SysMsg   *message.Message
-	UserMsg  *message.Message
-	Solution *message.Message
+	Model string
+
+	SysMsg    *message.Message
+	UserMsg   *message.Message
+	Solution  *message.Message
+	EvalScore float64
+
 	Complete bool
 }
 
-var GetID = func() func(layter int) string {
-	var IDHeader string = time.Now().Format("01-02-15-04")
-	var GlobalID int = 0
-	return func(layter int) string {
-		GlobalID++
-		return fmt.Sprintf("%s-%d-%d", IDHeader, layter, GlobalID)
-	}
-}()
-
-func (parent *TreeNode) NewChild() (newNode *TreeNode) {
-	id := GetID(parent.Layer + 1)
-	newNode = &TreeNode{Id: id, ParentId: parent.Id, Layer: parent.Layer + 1}
+func (parent *TreeNode) NewChild(Stage string) (newNode *TreeNode) {
+	id := db.NanoId(8)
+	CreateAt := time.Now().Unix()
+	newNode = &TreeNode{Id: id, RootId: parent.RootId, Stage: Stage, TimeAt: CreateAt, Model: parent.Model}
 	NodesMap.Set(id, newNode)
 	return newNode
 }
 func (node *TreeNode) Clone() (newNode *TreeNode) {
-	newNode = &TreeNode{Id: node.Id, ParentId: node.ParentId, Layer: node.Layer}
+	if node == nil {
+		return nil
+	}
+
+	id := db.NanoId(8)
+	newNode = &TreeNode{Id: id, RootId: node.RootId, Stage: node.Stage, Model: node.Model, Complete: node.Complete}
+	if node.SysMsg != nil {
+		newNode.SysMsg = message.SysMsg(node.SysMsg.Content)
+	}
+	if node.UserMsg != nil {
+		newNode.UserMsg = message.UserMsg(node.UserMsg.Content)
+	}
+	if node.Solution != nil {
+		newNode.Solution = message.Assistant(node.Solution.Content)
+	}
+
 	return newNode
 }
+func (node *TreeNode) CloneN(n int) (newNode []*TreeNode) {
+	newNode = make([]*TreeNode, n)
+	for i := 0; i < n; i++ {
+		newNode[i] = node.Clone()
+	}
+	return newNode
+}
+
 func (node *TreeNode) Solute() (err error) {
-	model, ok := models.Models.Get(node.Model)
+	model, ok := models.Models[node.Model]
 	if !ok {
 		return fmt.Errorf("model not found")
 	}
-	if node.SysMsg != nil {
-		node.Solution, err = model.AskLLM(0.7, false, node.SysMsg, node.UserMsg)
-	} else {
-		node.Solution, err = model.AskLLM(0.7, false, node.UserMsg)
-	}
+	node.Solution, err = model.AskLLM(0.7, false, node.SysMsg, node.UserMsg)
+	node.TimeAt = time.Now().Unix()
 	return err
 
 }
 
 func (n *TreeNode) Save() {
 	KeyTreeNode.HSet(n.Id, n)
-}
-
-func (node *TreeNode) Children() (children []*TreeNode) {
-	NodesMap.IterCb(func(key string, child *TreeNode) {
-		if child.ParentId == node.Id {
-			children = append(children, child)
-		}
-	})
-	return children
-
 }

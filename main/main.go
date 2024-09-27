@@ -1,17 +1,17 @@
 package main
 
 import (
+	"DualModelIterativeReasoning/batchop"
 	"DualModelIterativeReasoning/message"
 	"DualModelIterativeReasoning/models"
 	"DualModelIterativeReasoning/query"
-	"DualModelIterativeReasoning/reasoning"
-	"fmt"
 )
 
 // Perform reasoning
 var MCTSTrajectory = &query.TreeNode{
-	Id: "root",
-	UserMsg: message.User(`I have a 9 yrs old daughter, I want's help here with her using a funny | interesting | breath taking | deep-diving | emotion arousing story. 
+	Id:    "root",
+	Model: models.ModelQwen32B.Name,
+	UserMsg: message.UserMsg(`I have a 9 yrs old daughter, I want's help here with her using a funny | interesting | breath taking | deep-diving | emotion arousing story. 
 Remember, The Most Important thing is building the experience. If can not, Others Fade Away, because she's somehow formidable with her work.
 Learn meters, decimeters, and centimeters through a perceptual way. Encode it in a 6,000-word suspense detective novel.
 This requires conceiving the outline of the novel, with a lot of twists and turns. There should be 30+ applications of meters, decimeters, and centimeters in total.
@@ -21,10 +21,6 @@ Analyze & very impressive visual depict of each clue needed.Third person perspec
 `)}
 
 func main() {
-	rsb, err := models.SLM1.AskLLM(0.7, false, message.User("why the sky is blue?"))
-	if err == nil {
-		fmt.Printf("%s\n", rsb.Content)
-	}
 	mp, _ := query.KeyTreeNode.HGetAll()
 
 	for _, v := range mp {
@@ -37,8 +33,10 @@ func main() {
 	if query.NodesMap.Count() == 0 {
 		query.NodesMap.Set("root", MCTSTrajectory)
 	}
-
-	//step1 get difficulty
-	reasoning.ParalleBeamSearchUsingDualModelIterativeReasoning(MCTSTrajectory, 20)
+	problemReformulated, err := batchop.ParallelProblemReformulation(MCTSTrajectory)
+	if err != nil {
+		return
+	}
+	batchop.ParallelProblemSolving(problemReformulated)
 
 }

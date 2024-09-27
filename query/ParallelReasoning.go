@@ -6,11 +6,18 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func ParallelReasnoing(querys ...[]*TreeNode) (err error) {
+func AskLLMParallelly(query ...*TreeNode) (err error) {
+	// exeInGroup := func(g *errgroup.Group, node *TreeNode) {
+	// 	g.Go(func() (err error) {
+	// 		return node.Solute()
+	// 	})
+	// }
 	g, _ := errgroup.WithContext(context.Background())
-	for i, query := range querys {
+	for _, q := range query {
+		//exeInGroup(g, q)
+
 		g.Go(func() (err error) {
-			return query[i].Solute()
+			return q.Solute()
 		})
 	}
 	err = g.Wait()

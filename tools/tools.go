@@ -29,20 +29,30 @@ func ReadFloatAfterTag(s string, tags ...string) (float64, error) {
 		return 0, nil
 	}
 	s = s[ind+len(tag):]
-	s = strings.TrimSpace(s)
-
-	s = strings.Split(s, "\n")[0]
-	if ind := strings.Index(s, "="); ind >= 0 {
-		s = s[ind+1:]
+	var num strings.Builder
+	for ind = 0; ind < len(s) && (ind < 15) && num.Len() == 0; ind++ {
+		for ; ind < len(s) && strings.Contains("-0123456789.", string(s[ind])); ind++ {
+			num.WriteByte(s[ind])
+		}
 	}
-	s = strings.TrimSpace(s)
-
-	validInd := 0
-	for ; validInd < len(s) && strings.ContainsRune("0123456789.", rune(s[validInd])); validInd++ {
+	numStr := num.String()
+	if numStr == "" {
+		return 0, fmt.Errorf("no number found after tag %s", tag)
 	}
-	s = s[:validInd]
-	if validInd == 0 {
-		return 0, fmt.Errorf("no number found")
+	return strconv.ParseFloat(numStr, 64)
+}
+func ReadMarkdownTagOut(s string, tags ...string) string {
+	ind, tag := -1, ""
+	for i := 0; i < len(tags) && ind < 0; i++ {
+		tag = tags[i]
+		ind = strings.Index(s, tag)
 	}
-	return strconv.ParseFloat(s, 64)
+	if ind < 0 {
+		return ""
+	}
+	s = s[ind+len(tag):]
+	if ind := strings.Index(s, "\n"); ind > 0 && ind < 10 {
+		s = s[ind:]
+	}
+	return s
 }
