@@ -1,10 +1,11 @@
 package batchop
 
 import (
-	"DualModelIterativeReasoning/models"
-	"DualModelIterativeReasoning/query"
-	"DualModelIterativeReasoning/tools"
 	"fmt"
+
+	"github.com/doptime/DualModelIterativeReasoning/models"
+	"github.com/doptime/DualModelIterativeReasoning/query"
+	"github.com/doptime/DualModelIterativeReasoning/tools"
 )
 
 func ParallelEvaluator(node ...*query.Query) (err error) {

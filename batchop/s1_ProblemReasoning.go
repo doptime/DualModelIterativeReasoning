@@ -1,9 +1,10 @@
 package batchop
 
 import (
-	"DualModelIterativeReasoning/message"
-	"DualModelIterativeReasoning/query"
 	"strings"
+
+	"github.com/doptime/DualModelIterativeReasoning/message"
+	"github.com/doptime/DualModelIterativeReasoning/query"
 )
 
 func ProblemReformulation(node *query.Query) (msg []*query.Query, err error) {

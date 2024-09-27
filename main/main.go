@@ -1,10 +1,10 @@
 package main
 
 import (
-	"DualModelIterativeReasoning/batchop"
-	"DualModelIterativeReasoning/message"
-	"DualModelIterativeReasoning/models"
-	"DualModelIterativeReasoning/query"
+	"github.com/doptime/DualModelIterativeReasoning/batchop"
+	"github.com/doptime/DualModelIterativeReasoning/message"
+	"github.com/doptime/DualModelIterativeReasoning/models"
+	"github.com/doptime/DualModelIterativeReasoning/query"
 )
 
 // Perform reasoning

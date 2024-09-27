@@ -1,9 +1,10 @@
 package batchop
 
 import (
-	"DualModelIterativeReasoning/query"
-	"DualModelIterativeReasoning/tools"
 	"strings"
+
+	"github.com/doptime/DualModelIterativeReasoning/query"
+	"github.com/doptime/DualModelIterativeReasoning/tools"
 
 	"github.com/atotto/clipboard"
 )

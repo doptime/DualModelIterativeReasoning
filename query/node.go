@@ -1,9 +1,10 @@
 package query
 
 import (
-	"DualModelIterativeReasoning/message"
-	"DualModelIterativeReasoning/models"
 	"fmt"
+
+	"github.com/doptime/DualModelIterativeReasoning/message"
+	"github.com/doptime/DualModelIterativeReasoning/models"
 
 	"github.com/doptime/doptime/db"
 	cmap "github.com/orcaman/concurrent-map/v2"

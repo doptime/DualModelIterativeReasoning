@@ -1,10 +1,10 @@
 package batchop
 
 import (
-	"DualModelIterativeReasoning/message"
-	"DualModelIterativeReasoning/models"
-	"DualModelIterativeReasoning/query"
-	"DualModelIterativeReasoning/tools"
+	"github.com/doptime/DualModelIterativeReasoning/message"
+	"github.com/doptime/DualModelIterativeReasoning/models"
+	"github.com/doptime/DualModelIterativeReasoning/query"
+	"github.com/doptime/DualModelIterativeReasoning/tools"
 )
 
 func generateProblemSolvingPrompt(node *query.Query, formerSolutionGenerated *message.Message) (msg *message.Message) {

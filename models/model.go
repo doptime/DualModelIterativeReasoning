@@ -1,12 +1,13 @@
 package models
 
 import (
-	"DualModelIterativeReasoning/message"
 	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/doptime/DualModelIterativeReasoning/message"
 )
 
 type Model struct {

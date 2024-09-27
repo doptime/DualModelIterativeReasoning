@@ -1,13 +1,14 @@
 package batchop
 
 import (
-	"DualModelIterativeReasoning/message"
-	"DualModelIterativeReasoning/models"
-	"DualModelIterativeReasoning/query"
 	"context"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/doptime/DualModelIterativeReasoning/message"
+	"github.com/doptime/DualModelIterativeReasoning/models"
+	"github.com/doptime/DualModelIterativeReasoning/query"
 
 	"golang.org/x/sync/errgroup"
 )

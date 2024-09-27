@@ -1,4 +1,4 @@
-module DualModelIterativeReasoning
+module github.com/doptime/DualModelIterativeReasoning
 
 go 1.22.3
 
