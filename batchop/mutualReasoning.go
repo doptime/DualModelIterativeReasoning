@@ -138,7 +138,6 @@ func ParalleBeamSearchUsingDualModelIterativeReasoning(node *query.Query, Depty 
 				if LoopCnt >= 13 {
 					node.Complete = regexMatchJsonSolved.MatchString(node.AssistantMsg.Content)
 				}
-				node.Save()
 			}
 		}
 		CopyToClipboard(childNode1, childNode2)

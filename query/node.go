@@ -10,7 +10,6 @@ import (
 	cmap "github.com/orcaman/concurrent-map/v2"
 )
 
-var KeyTreeNode = db.HashKey[string, *Query]()
 var NodesMap = cmap.New[*Query]()
 
 type Query struct {
@@ -92,8 +91,4 @@ func (node *Query) Solute() (err error) {
 	node.AssistantMsg, err = model.AskLLM(0.7, false, node.SysMsg, node.UserMsg)
 	return err
 
-}
-
-func (n *Query) Save() {
-	KeyTreeNode.HSet(n.Id, n)
 }

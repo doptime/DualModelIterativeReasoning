@@ -21,18 +21,19 @@ Analyze & very impressive visual depict of each clue needed.Third person perspec
 `)}
 
 func main() {
-	mp, _ := query.KeyTreeNode.HGetAll()
+	// var KeyTreeNode = db.HashKey[string, *Query]()
+	// mp, _ := query.KeyTreeNode.HGetAll()
 
-	for _, v := range mp {
-		query.NodesMap.Set(v.Id, v)
-	}
-	query.NodesMap.Set("root", MCTSTrajectory)
-	if node, ok := query.NodesMap.Get("root"); ok {
-		MCTSTrajectory = node
-	}
-	if query.NodesMap.Count() == 0 {
-		query.NodesMap.Set("root", MCTSTrajectory)
-	}
+	// for _, v := range mp {
+	// 	query.NodesMap.Set(v.Id, v)
+	// }
+	// query.NodesMap.Set("root", MCTSTrajectory)
+	// if node, ok := query.NodesMap.Get("root"); ok {
+	// 	MCTSTrajectory = node
+	// }
+	// if query.NodesMap.Count() == 0 {
+	// 	query.NodesMap.Set("root", MCTSTrajectory)
+	// }
 	problemReformulated, err := batchop.ProblemReformulation(MCTSTrajectory)
 	if err != nil {
 		return

@@ -29,11 +29,6 @@ func CopyToClipboard(node ...*query.Query) {
 		clipboard.WriteAll(s)
 	}
 }
-func SaveToRedis(nodes ...*query.Query) {
-	for _, v := range nodes {
-		v.Save()
-	}
-}
 func SelectBestNode(nodes ...*query.Query) (best *query.Query) {
 	bestScore := float64(0)
 	for _, v := range nodes {
