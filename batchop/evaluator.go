@@ -5,7 +5,6 @@ import (
 
 	"github.com/doptime/DualModelIterativeReasoning/models"
 	"github.com/doptime/DualModelIterativeReasoning/query"
-	"github.com/doptime/DualModelIterativeReasoning/tools"
 )
 
 func ParallelEvaluator(node ...*query.Query) (err error) {
@@ -50,13 +49,10 @@ Please complete these steps in a friendly, easy-to-understand way. Throughout th
 	nodesCloned := make([]*query.Query, len(node))
 	for i, v := range node {
 		nodesCloned[i] = v.Clone()
-		nodesCloned[i].UserMsg.Content = prompt + "\n\nHere's what to evaluate:\n" + v.UserMsg.Content
+		nodesCloned[i].MsgUser.Content = prompt + "\n\nHere's what to evaluate:\n" + v.MsgUser.Content
 	}
 	WithModel(models.ModelMistralSmall.Name, nodesCloned...)
 	query.AskLLMParallelly(nodesCloned...)
-	for _, v := range node {
-		v.EvalScore, _ = tools.ReadFloatAfterTag(v.AssistantMsg.Content, "overall_score")
-	}
 	CopyToClipboard(nodesCloned...)
 	return err
 }

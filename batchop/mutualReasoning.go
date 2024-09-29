@@ -121,28 +121,21 @@ func ParalleBeamSearchUsingDualModelIterativeReasoning(node *query.Query, Depty 
 		slm := Models[LoopCnt%len(Models)]
 		Stage := "iter_" + strconv.Itoa(LoopCnt)
 		childNode1, childNode2 := parent1.NewChild(Stage), parent2.NewChild(Stage)
-		msg := BuildDualModelIterativeReasoningMessages(node.UserMsg.Content, parent1.UserMsg, parent2.UserMsg)
+		msg := BuildDualModelIterativeReasoningMessages(node.MsgUser.Content, parent1.MsgUser, parent2.MsgUser)
 		g, _ := errgroup.WithContext(context.Background())
 		g.Go(func() (err error) {
-			childNode1.AssistantMsg, err = slm.AskLLM(0.7, false, msg)
+			childNode1.MsgAssistant, err = slm.AskLLM(0.7, false, msg)
 			return err
 		})
 		g.Go(func() (err error) {
-			childNode2.AssistantMsg, err = slm.AskLLM(0.7, false, msg)
+			childNode2.MsgAssistant, err = slm.AskLLM(0.7, false, msg)
 			return err
 		})
 		err = g.Wait()
 
-		if childNode1 != nil && childNode1.AssistantMsg != nil && childNode2 != nil && childNode2.AssistantMsg != nil {
-			for _, node := range []*query.Query{childNode1, childNode2} {
-				if LoopCnt >= 13 {
-					node.Complete = regexMatchJsonSolved.MatchString(node.AssistantMsg.Content)
-				}
-			}
-		}
 		CopyToClipboard(childNode1, childNode2)
 
-		if childNode1.Complete || childNode2.Complete || LoopCnt > Depty {
+		if regexMatchJsonSolved.MatchString(childNode1.MsgAssistant.Content) || regexMatchJsonSolved.MatchString(childNode2.MsgAssistant.Content) || LoopCnt > Depty {
 			break
 		}
 		parent1, parent2 = childNode1, childNode2

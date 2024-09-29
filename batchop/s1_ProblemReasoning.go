@@ -10,7 +10,7 @@ import (
 func ProblemReformulation(node *query.Query) (msg []*query.Query, err error) {
 	var prompt strings.Builder
 	prompt.WriteString("You are a world-class powerfull AI reasoning agent, cooperative, innovative, carefull, reflective and helpfull. Together with your AI counterpart, you are solving problems through structured collaboration.;")
-	prompt.WriteString("#Problem:\n" + node.UserMsg.Content + "\n")
+	prompt.WriteString("#Problem:\n" + node.MsgUser.Content + "\n")
 	prompt.WriteString(`In order to Reformulate the input problem statement into a clear, well-defined problem statement that  capture it's essence fully and accurately and suitable for solving with a language model. `)
 
 	cs := node.NewChildren("ProblemReformulate",
@@ -36,12 +36,12 @@ func ProblemReformulation(node *query.Query) (msg []*query.Query, err error) {
 	//ProblemReformulate
 	prompt = strings.Builder{}
 	prompt.WriteString("You are a world-class powerfull AI reasoning agent, cooperative, innovative, carefull, reflective and helpfull. Together with your AI counterpart, you are solving problems through structured collaboration.;")
-	prompt.WriteString("#Problem:\n" + node.UserMsg.Content + "\n")
+	prompt.WriteString("#Problem:\n" + node.MsgUser.Content + "\n")
 	prompt.WriteString(`given Problem Explorations on the Problem:`)
-	prompt.WriteString("part1:\n" + cs[0].UserMsg.Content + "\n")
-	prompt.WriteString("part2:\n" + cs[1].UserMsg.Content + "\n")
-	prompt.WriteString("part3:\n" + cs[2].UserMsg.Content + "\n")
-	prompt.WriteString("part4:\n" + cs[3].UserMsg.Content + "\n\n\n")
+	prompt.WriteString("part1:\n" + cs[0].MsgUser.Content + "\n")
+	prompt.WriteString("part2:\n" + cs[1].MsgUser.Content + "\n")
+	prompt.WriteString("part3:\n" + cs[2].MsgUser.Content + "\n")
+	prompt.WriteString("part4:\n" + cs[3].MsgUser.Content + "\n\n\n")
 	prompt.WriteString(`### Final Reformulated Problem Statement
 	Reformulate the input problem statement into a clear, well-defined problem statement that  capture it's essence fully and accurately according to following steps:
 	- Provide the Context of the problem.

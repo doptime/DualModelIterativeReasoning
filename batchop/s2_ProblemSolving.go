@@ -9,7 +9,7 @@ import (
 
 func generateProblemSolvingPrompt(node *query.Query, formerSolutionGenerated *message.Message) (msg *message.Message) {
 	prompt := "You are a world-class powerfull AI reasoning agent, cooperative, innovative, carefull, reflective and helpfull. Together with your AI counterpart, you are solving problems through structured collaboration.;"
-	prompt += "Problem Reformulated:\n" + node.UserMsg.Content + "\n\n"
+	prompt += "Problem Reformulated:\n" + node.MsgUser.Content + "\n\n"
 	if formerSolutionGenerated != nil && formerSolutionGenerated.Content != "" {
 		s := formerSolutionGenerated.Content
 		if part := tools.ReadMarkdownTagOut(s, "Solution Generated"); part != "" {
@@ -52,7 +52,7 @@ func ProblemSolving(node *query.Query) (msg []*query.Query, err error) {
 
 	ProblemIter2 := node.NewChild("SolutionIter").CloneN(4)
 	for i := 0; i < 4; i++ {
-		ProblemIter2[i].WithMessage(generateProblemSolvingPrompt(node, problemToSolve[i].AssistantMsg))
+		ProblemIter2[i].WithMessage(generateProblemSolvingPrompt(node, problemToSolve[i].MsgAssistant))
 	}
 	err = query.AskLLMParallelly(ProblemIter2...)
 	if err != nil {

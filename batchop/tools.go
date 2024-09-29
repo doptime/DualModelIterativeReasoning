@@ -19,9 +19,9 @@ func CopyToClipboard(node ...*query.Query) {
 
 	var stringBuilder strings.Builder
 	for _, n := range node {
-		stringBuilder.WriteString("\n\n# Stage: " + n.Stage + " Model: " + n.Model + " Solution: \n\n")
-		if n.AssistantMsg != nil {
-			stringBuilder.WriteString(n.AssistantMsg.Content)
+		stringBuilder.WriteString("\n\n# Stage: " + n.Group + " Model: " + n.Model + " Solution: \n\n")
+		if n.MsgAssistant != nil {
+			stringBuilder.WriteString(n.MsgAssistant.Content)
 		}
 	}
 
@@ -32,9 +32,8 @@ func CopyToClipboard(node ...*query.Query) {
 func SelectBestNode(nodes ...*query.Query) (best *query.Query) {
 	bestScore := float64(0)
 	for _, v := range nodes {
-		score, e := tools.ReadFloatAfterTag(v.AssistantMsg.Content, "overall_score")
+		score, e := tools.ReadFloatAfterTag(v.MsgAssistant.Content, "overall_score")
 		if e == nil && score > bestScore {
-			v.EvalScore = score
 			best = v
 		}
 	}

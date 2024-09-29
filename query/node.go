@@ -2,46 +2,47 @@ package query
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/doptime/DualModelIterativeReasoning/message"
 	"github.com/doptime/DualModelIterativeReasoning/models"
-
-	"github.com/doptime/doptime/db"
-	cmap "github.com/orcaman/concurrent-map/v2"
 )
 
-var NodesMap = cmap.New[*Query]()
-
 type Query struct {
-	Id     string
-	RootId string
-	Stage  string
+	Created int64
+	Group   string
 
 	Model string
 
-	SysMsg       *message.Message
-	UserMsg      *message.Message
-	AssistantMsg *message.Message
-
-	EvalScore float64
-
-	Complete bool
+	MsgSys       *message.Message
+	MsgUser      *message.Message
+	MsgAssistant *message.Message
 }
 type QueryList []*Query
 
-func (parent *Query) NewChild(Stage string) (newNode *Query) {
-	id := db.NanoId(8)
-	newNode = &Query{Id: id, RootId: parent.RootId, Stage: Stage, Model: parent.Model}
-	NodesMap.Set(id, newNode)
+var getUniqId = func() func() int64 {
+	var uniqTimeId int64 = 0
+	return func() int64 {
+		id := time.Now().Unix()
+		if id <= uniqTimeId {
+			id = uniqTimeId + 1
+		}
+		uniqTimeId = id
+		return id
+	}
+}()
+
+func (parent *Query) NewChild(Group string) (newNode *Query) {
+	newNode = &Query{Created: getUniqId(), Group: Group, Model: parent.Model}
 	return newNode
 }
 func (node *Query) WithMessage(msg *message.Message) (old *Query) {
 	if msg.Role == "system" {
-		node.SysMsg = msg
+		node.MsgSys = msg
 	} else if msg.Role == "user" {
-		node.UserMsg = msg
+		node.MsgUser = msg
 	} else if msg.Role == "assistant" {
-		node.AssistantMsg = msg
+		node.MsgAssistant = msg
 	}
 	return node
 }
@@ -61,16 +62,15 @@ func (node *Query) Clone() (newNode *Query) {
 		return nil
 	}
 
-	id := db.NanoId(8)
-	newNode = &Query{Id: id, RootId: node.RootId, Stage: node.Stage, Model: node.Model, Complete: node.Complete}
-	if node.SysMsg != nil {
-		newNode.SysMsg = message.SysMsg(node.SysMsg.Content)
+	newNode = &Query{Created: getUniqId(), Group: node.Group, Model: node.Model}
+	if node.MsgSys != nil {
+		newNode.MsgSys = message.SysMsg(node.MsgSys.Content)
 	}
-	if node.UserMsg != nil {
-		newNode.UserMsg = message.UserMsg(node.UserMsg.Content)
+	if node.MsgUser != nil {
+		newNode.MsgUser = message.UserMsg(node.MsgUser.Content)
 	}
-	if node.AssistantMsg != nil {
-		newNode.AssistantMsg = message.Assistant(node.AssistantMsg.Content)
+	if node.MsgAssistant != nil {
+		newNode.MsgAssistant = message.Assistant(node.MsgAssistant.Content)
 	}
 
 	return newNode
@@ -88,7 +88,7 @@ func (node *Query) Solute() (err error) {
 	if !ok {
 		return fmt.Errorf("model not found")
 	}
-	node.AssistantMsg, err = model.AskLLM(0.7, false, node.SysMsg, node.UserMsg)
+	node.MsgAssistant, err = model.AskLLM(0.7, false, node.MsgSys, node.MsgUser)
 	return err
 
 }
