@@ -68,7 +68,7 @@ type ChatGPTResponse struct {
 	PromptLogprobs interface{} `json:"prompt_logprobs"`
 }
 
-func (m *Model) AskLLM(temperature float64, stream bool, msg ...*message.Message) (r *message.Message, err error) {
+func (m *Model) AskLLM(temperature float64, stream bool, msg ...*message.Message) (assistantMsg string, err error) {
 	messages := make([]*message.Message, 0, len(msg))
 	for _, _msg := range msg {
 		if _msg != nil {
@@ -86,13 +86,13 @@ func (m *Model) AskLLM(temperature float64, stream bool, msg ...*message.Message
 	// Convert payload to JSON
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	// Create a new request
 	req, err := http.NewRequest("POST", m.Url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	// Set headers
@@ -103,7 +103,7 @@ func (m *Model) AskLLM(temperature float64, stream bool, msg ...*message.Message
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	defer resp.Body.Close()
 
@@ -115,7 +115,7 @@ func (m *Model) AskLLM(temperature float64, stream bool, msg ...*message.Message
 	}
 }
 
-func handleStreamResponse(resp *http.Response) (*message.Message, error) {
+func handleStreamResponse(resp *http.Response) (assistantMsg string, err error) {
 	var fullContent strings.Builder
 	decoder := json.NewDecoder(resp.Body)
 	for {
@@ -125,30 +125,30 @@ func handleStreamResponse(resp *http.Response) (*message.Message, error) {
 			break
 		}
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 		if len(chunk.Choices) > 0 {
 			fullContent.WriteString(chunk.Choices[0].Delta.Content)
 		}
 	}
-	return message.Assistant(fullContent.String()), nil
+	return fullContent.String(), nil
 }
 
-func handleNonStreamResponse(resp *http.Response) (*message.Message, error) {
+func handleNonStreamResponse(resp *http.Response) (assistantMsg string, err error) {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	var response ChatGPTResponse
 	err = json.Unmarshal(body, &response)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	if len(response.Choices) > 0 {
-		return message.Assistant(response.Choices[0].Message.Content), nil
+		return response.Choices[0].Message.Content, nil
 	}
 
-	return nil, nil
+	return "", nil
 }

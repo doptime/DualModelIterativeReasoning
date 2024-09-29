@@ -1,17 +1,16 @@
 package batchop
 
 import (
-	"github.com/doptime/DualModelIterativeReasoning/message"
 	"github.com/doptime/DualModelIterativeReasoning/models"
 	"github.com/doptime/DualModelIterativeReasoning/query"
 	"github.com/doptime/DualModelIterativeReasoning/tools"
 )
 
-func generateProblemSolvingPrompt(node *query.Query, formerSolutionGenerated *message.Message) (msg *message.Message) {
+func generateProblemSolvingPrompt(node *query.Query, formerSolutionGenerated string) (userMsg string) {
 	prompt := "You are a world-class powerfull AI reasoning agent, cooperative, innovative, carefull, reflective and helpfull. Together with your AI counterpart, you are solving problems through structured collaboration.;"
-	prompt += "Problem Reformulated:\n" + node.MsgUser.Content + "\n\n"
-	if formerSolutionGenerated != nil && formerSolutionGenerated.Content != "" {
-		s := formerSolutionGenerated.Content
+	prompt += "Problem Reformulated:\n" + node.MsgUser + "\n\n"
+	if formerSolutionGenerated != "" {
+		s := formerSolutionGenerated
 		if part := tools.ReadMarkdownTagOut(s, "Solution Generated"); part != "" {
 			s = part
 		}
@@ -35,12 +34,12 @@ func generateProblemSolvingPrompt(node *query.Query, formerSolutionGenerated *me
 	prompt += "Based on the above analysis, write out the full step-by-step (Chain of Thought) solution plan for the problem.\n"
 	prompt += "Iteration to improve previous solutions if applicable\n"
 	prompt += "Before unfolding a step. explain the plan of the step in the leading sentence. (e.g. \"Step 1: First, I will ...\", \"Step 2: Next, I will ...\")"
-	return message.UserMsg(prompt)
+	return prompt
 }
 
 func ProblemSolving(node *query.Query) (msg []*query.Query, err error) {
 	//Step 1: generate solutions
-	UserMsg := generateProblemSolvingPrompt(node, nil)
+	UserMsg := generateProblemSolvingPrompt(node, "")
 	problemToSolve := node.NewChildren("SolutionIter", UserMsg, UserMsg, UserMsg, UserMsg)
 	WithModel(models.ModelMistralSmall.Name, problemToSolve...)
 
@@ -52,7 +51,7 @@ func ProblemSolving(node *query.Query) (msg []*query.Query, err error) {
 
 	ProblemIter2 := node.NewChild("SolutionIter").CloneN(4)
 	for i := 0; i < 4; i++ {
-		ProblemIter2[i].WithMessage(generateProblemSolvingPrompt(node, problemToSolve[i].MsgAssistant))
+		ProblemIter2[i].WithMsgUser(generateProblemSolvingPrompt(node, problemToSolve[i].MsgAssistant))
 	}
 	err = query.AskLLMParallelly(ProblemIter2...)
 	if err != nil {

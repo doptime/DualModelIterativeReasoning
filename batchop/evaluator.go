@@ -49,7 +49,7 @@ Please complete these steps in a friendly, easy-to-understand way. Throughout th
 	nodesCloned := make([]*query.Query, len(node))
 	for i, v := range node {
 		nodesCloned[i] = v.Clone()
-		nodesCloned[i].MsgUser.Content = prompt + "\n\nHere's what to evaluate:\n" + v.MsgUser.Content
+		nodesCloned[i].MsgUser = prompt + "\n\nHere's what to evaluate:\n" + v.MsgUser
 	}
 	WithModel(models.ModelMistralSmall.Name, nodesCloned...)
 	query.AskLLMParallelly(nodesCloned...)

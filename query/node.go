@@ -14,9 +14,9 @@ type Query struct {
 
 	Model string
 
-	MsgSys       *message.Message
-	MsgUser      *message.Message
-	MsgAssistant *message.Message
+	MsgSys       string
+	MsgUser      string
+	MsgAssistant string
 }
 type QueryList []*Query
 
@@ -36,14 +36,16 @@ func (parent *Query) NewChild(Group string) (newNode *Query) {
 	newNode = &Query{Created: getUniqId(), Group: Group, Model: parent.Model}
 	return newNode
 }
-func (node *Query) WithMessage(msg *message.Message) (old *Query) {
-	if msg.Role == "system" {
-		node.MsgSys = msg
-	} else if msg.Role == "user" {
-		node.MsgUser = msg
-	} else if msg.Role == "assistant" {
-		node.MsgAssistant = msg
-	}
+func (node *Query) WithMsgSys(msg string) (old *Query) {
+	node.MsgSys = msg
+	return node
+}
+func (node *Query) WithMsgUser(msg string) (old *Query) {
+	node.MsgUser = msg
+	return node
+}
+func (node *Query) WithMsgAssistant(msg string) (old *Query) {
+	node.MsgAssistant = msg
 	return node
 }
 func (node *Query) WithModel(model string) *Query {
@@ -51,9 +53,9 @@ func (node *Query) WithModel(model string) *Query {
 	return node
 }
 
-func (parent *Query) NewChildren(Stage string, msgs ...*message.Message) (newNode []*Query) {
-	for _, msg := range msgs {
-		newNode = append(newNode, parent.NewChild(Stage).WithMessage(msg))
+func (parent *Query) NewChildren(Stage string, userMsgs ...string) (newNode []*Query) {
+	for _, msg := range userMsgs {
+		newNode = append(newNode, parent.NewChild(Stage).WithMsgUser(msg))
 	}
 	return newNode
 }
@@ -63,15 +65,9 @@ func (node *Query) Clone() (newNode *Query) {
 	}
 
 	newNode = &Query{Created: getUniqId(), Group: node.Group, Model: node.Model}
-	if node.MsgSys != nil {
-		newNode.MsgSys = message.SysMsg(node.MsgSys.Content)
-	}
-	if node.MsgUser != nil {
-		newNode.MsgUser = message.UserMsg(node.MsgUser.Content)
-	}
-	if node.MsgAssistant != nil {
-		newNode.MsgAssistant = message.Assistant(node.MsgAssistant.Content)
-	}
+	newNode.MsgSys = node.MsgSys
+	newNode.MsgUser = node.MsgUser
+	newNode.MsgAssistant = node.MsgAssistant
 
 	return newNode
 }
@@ -88,7 +84,8 @@ func (node *Query) Solute() (err error) {
 	if !ok {
 		return fmt.Errorf("model not found")
 	}
-	node.MsgAssistant, err = model.AskLLM(0.7, false, node.MsgSys, node.MsgUser)
+
+	node.MsgAssistant, err = model.AskLLM(0.7, false, message.SysMsg(node.MsgSys), message.UserMsg(node.MsgUser))
 	return err
 
 }
