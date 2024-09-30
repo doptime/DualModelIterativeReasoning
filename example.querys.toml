@@ -1,0 +1,37 @@
+[[query]]
+created = 1632150400
+group = "General"
+model = "gpt-3.5-turbo"
+msg_sys = "You are a helpful assistant."
+msg_user = "How do I format text in Markdown?"
+msg_assistant = """
+Here's a quick guide to formatting text in Markdown:
+
+1. **Bold**: Use double asterisks or underscores. Example: **bold text** or __bold text__
+
+2. *Italic*: Use single asterisks or underscores. Example: *italic text* or _italic text_
+
+3. ~~Strikethrough~~: Use double tildes. Example: ~~strikethrough text~~
+
+4. # Headings: Use hash signs. More hashes for smaller headings:
+   # Heading 1
+   ## Heading 2
+   ### Heading 3
+
+5. Lists:
+   - Unordered lists use hyphens, plus signs, or asterisks
+   1. Ordered lists use numbers
+
+6. [Links](https://example.com): Use square brackets for the text, parentheses for the URL
+
+7. `Inline code`: Use backticks
+
+8. Code blocks: Use triple backticks
+   ```
+   function example() {
+     console.log("This is a code block");
+   }
+   ```
+
+Remember to escape special characters like \\* or \\_ if you want to use them literally!
+"""

@@ -10,7 +10,8 @@ import (
 
 type Query struct {
 	Created int64
-	Group   string
+
+	Group string
 
 	Model string
 
